@@ -1,0 +1,57 @@
+<div class="flex flex-column gap-2 w-100 mx-auto pt-2 pb-5 h-fit">
+    <p-dropdown 
+        #newPlaylistDropdown
+        [options]="searchedPlaylists || []"
+        [(ngModel)]="newPlaylist"
+        optionLabel="name"
+        [filter]="true"
+        (onFilter)="searchPlaylists($event)"
+        (onChange)="onSelectionChange($event); newPlaylist!=null?newPlaylistDropdown.clear():null"
+        [showClear]="true"
+        placeholder="Find a playlist by name"
+        class="w-full border-2 border-gray-400 border-solid rounded-lg addOtherPlaylists-dropdown">
+        <ng-template pTemplate="selectedItem" let-selectedOption>
+            <div class="flex align-items-center gap-2 truncate pl-2">
+                <img src="{{ getImage(selectedOption) }}" width="40" height="40"/>
+                {{ selectedOption?.name }}
+            </div>
+        </ng-template>
+        <ng-template pTemplate="item" let-playlist>
+            <div class="flex align-items-center gap-2 truncate pl-2">
+                <img src="{{ getImage(playlist) }}" width="40" height="40"/>
+                {{ playlist?.name }}
+            </div>
+        </ng-template>
+    </p-dropdown>
+    <p-progressSpinner *ngIf="loadingPlaylistById" [style]="{width: '40px', height: '40px'}" strokeWidth="5" animationDuration="1s"></p-progressSpinner>
+    <input type="text" class="mt-2 py-2 px-3 w-full border-2 border-gray-400 border-solid rounded-lg" 
+        pInputText 
+        [(ngModel)]="newPlaylistID" 
+        (ngModelChange)="onNewPLIDChange($event)" 
+        placeholder="Or paste playlist ID"
+        pTooltip="https://open.spotify.com/playlist/playlist_id?si=..." 
+        *ngIf="!newPLById&&!loadingPlaylistById"
+    />
+    <div class="w-full flex flex-row justify-content-evenly">
+        <p-chip *ngIf="newPLById" class="min-w-[60%] max-w-[60%] my-auto mx-auto" removable="true" (onRemove)="newPLById=false; newPlaylistID=''; newPlaylist=undefined;">
+            <div class="flex align-items-center gap-2 px-2 truncate pl-2 w-full">
+                <img src="{{getImage(newPlaylist)}}" width="40" height="40"/>
+                {{newPlaylist?.name}}
+            </div>
+        </p-chip>
+        <button pButton pRipple *ngIf="newPLById" class="p-button-rounded p-button-success py-2 px-3 h-fit my-auto" (click)="addPlaylist()">
+            Add Playlist
+        </button>
+    </div>
+</div>
+
+<div class="flex justify-content-start flex-column w-full border-2 border-gray-400 border-solid rounded-lg px-3 py-2" *ngIf="newPlaylists.length>0">
+    <i class="ml-auto pi pi-times-circle text-red-500 cursor-pointer text-lg" pTooltip="Clear List" (click)="clearNewPlaylists()"></i>
+    <p-chip class="min-w-[70%] max-w-[70%] ml-2" *ngFor="let playlist of newPlaylists" removable="true" (onRemove)="removeFromNewPlaylists(playlist.id)">
+        <div class="flex align-items-center gap-2 truncate pl-2 w-full">
+            <img src="{{getImage(playlist)}}" height="40" width="40"/>
+            {{playlist?.name}}
+        </div>
+    </p-chip>
+</div>
+<button *ngIf="newPlaylists.length>0" pButton pRipple class="p-button-rounded p-button-success p-button-lg mt-5 py-2 px-3" (click)="addNewPlaylists()">Add New Playlists</button>

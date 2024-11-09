@@ -1,0 +1,142 @@
+
+<p-dataView class="dataview-playlist" #dv  [value]="userPlaylists" [layout]="layout" >
+    
+    <ng-template *ngIf="!onMobile" pTemplate="header">
+        <div class="flex flex-column md:flex-row md:justify-content-start">
+            <p-button class="my-auto mr-5" icon="pi pi-refresh" [rounded]="true" [text]="true" pTooltip="Refresh" (click)="refresh()"></p-button>
+            <p-dropdown
+            [options]="sortOptions" [(ngModel)]="sortKey" placeholder="Sort By Name" (onChange)="onSortChange($event)" styleClass="flex border-round border-1 border-gray-400" class="w-fit h-fit" panelStyleClass="ddPanel" 
+            appendTo="body"/>
+            <div class="mb-auto mt-0 ml-2 lg:mt-auto" >
+                <p-button icon="pi pi-arrow-up" [rounded]="true" [text]="true" pTooltip="Ascending" (click)="toggleAscending()" *ngIf="ascendingSort"/>
+                <p-button icon="pi pi-arrow-down" [rounded]="true" [text]="true" pTooltip="Descending" (click)="toggleAscending()" *ngIf="!ascendingSort"/>
+            </div>
+            <div class="flex flex-column flex-1 lg:flex-row md:ml-5">
+                <!-- <p-button *ngIf="!(state==2)" (click)="clearSelection()" icon="pi pi-times" size="small" pTooltip="Clear Selection" class="custom-icon-button mr-auto my-auto" ></p-button>                 -->
+                <input [(ngModel)]="filterValue" type="text" pInputText class="h-fit p-2 ml-0 lg:h-full w-fit border-round border-1 border-gray-400 lg:my-auto lg:mx-auto"  placeholder="Search"/>
+                <p-button 
+                    *ngIf="!(state==2)"
+                    class="h-full w-fit text-sm mt-2 mb-auto p-button mr-auto pl-3 pr-3 lg:mr-0 lg:my-auto lg:mx-auto" 
+                    (click)="addOtherPlaylist()" 
+                    label="Add Other Playlist" 
+                    icon="pi pi-plus" >
+                </p-button>
+                <p-button 
+                    *ngIf="(state==2)"
+                    class="h-full w-fit text-sm mt-2 mb-auto p-button mr-auto pl-3 pr-3 lg:mr-0 lg:my-auto lg:mx-auto" 
+                    (click)="createPlaylist()" 
+                    label="Create Playlist" 
+                    icon="pi pi-plus" >
+                </p-button>
+
+                <button pButton pRipple 
+                    class="h-full w-fit text-sm mt-2 mb-auto p-button-success mr-auto p-3 lg:mr-0 lg:my-auto lg:mx-auto" 
+                    label="Submit Selection" 
+                    severity="success" 
+                    icon="pi pi-check" 
+                    iconPos="right"
+                    *ngIf="!(state==2)"
+                    (click)="submitSelection()">
+                </button>            
+            </div>
+        </div>
+    </ng-template>
+    
+    <ng-template *ngIf="onMobile" pTemplate="header">
+        <div class="flex flex-column">
+            <div class="flex flex-row justify-start">
+                <p-speedDial [model]="itemsSpeedDial" direction="right" (onShow)="openSpeedDial()" (onHide)="closeSpeedDial()" class="playlist-speeddial" icon="pi pi-bars"/>
+                <p-dropdown *ngIf="!speedDialOpened"
+                [options]="sortOptions" [(ngModel)]="sortKey" placeholder="Sort By Name" (onChange)="onSortChange($event)" styleClass="flex border-round border-1 border-gray-400 ml-2" class="w-fit h-fit" panelStyleClass="ddPanel" 
+                appendTo="body"/>
+                <div *ngIf="!speedDialOpened" class="my-auto lg:ml-5 lg:mt-auto" >
+                    <p-button icon="pi pi-arrow-up" [rounded]="true" [text]="true" pTooltip="Ascending" (click)="toggleAscending()" *ngIf="ascendingSort"/>
+                    <p-button icon="pi pi-arrow-down" [rounded]="true" [text]="true" pTooltip="Descending" (click)="toggleAscending()" *ngIf="!ascendingSort"/>
+                </div>
+                <!-- <div class="flex flex-column flex-1 lg:flex-row md:ml-5">
+                    <p-button *ngIf="!(state==2)" (click)="clearSelection()" icon="pi pi-times" size="small" pTooltip="Clear Selection" class="custom-icon-button mr-auto my-auto" ></p-button>                
+                    <p-button class="h-full w-fit text-sm mt-2 mb-auto p-button mr-auto pl-3 pr-3 lg:mr-0 lg:my-auto lg:mx-auto" (click)="createPlaylist()" label="Create Playlist" icon="pi pi-plus" ></p-button>
+                    <button pButton pRipple 
+                        class="h-full w-fit text-sm mt-2 mb-auto p-button-success mr-auto p-3 lg:mr-0 lg:my-auto lg:mx-auto" 
+                        label="Submit Selection" 
+                        severity="success" 
+                        icon="pi pi-check" 
+                        iconPos="right"
+                        *ngIf="!(state==2)"
+                        (click)="submitSelection()">
+                    </button>            
+                </div> -->
+            </div>
+            <input *ngIf="searching" [(ngModel)]="filterValue" type="text" pInputText class="p-2 ml-0 mt-2 lg:h-full w-fit border-round border-1 border-gray-400 lg:my-auto lg:mx-auto"  placeholder="Search"/>
+        </div>
+
+    </ng-template>
+
+    <ng-template pTemplate="list" let-userPlaylists>
+        <div class="grid grid-nogutter">
+            <div class="col-12" *ngFor="let item of userPlaylists; let first = first" class="col-12 dataview-playlist-row">
+                <div class="flex flex-column sm:flex-row sm:align-items-center px-4 {{state==2 ? 'py-3': 'py-1'}} gap-3" [ngClass]="{ 'border-top-1 surface-border': !first }">
+                    <div class="md:w-10rem flex-column flex md:align-items-center align-items-start">
+                        <a href="{{getPlaylistUrl(item)}}" target="_blank">
+                            <img class="block xl:block border-round hover:shadow-lg hover:cursor-pointer hover:shadow-gray-700" pTooltip="Open Playlist" [src]="getImage(item)" [alt]="item.name" width="{{state==2 ? 90: 75}}"/>
+                        </a>
+                        <div class="{{state==2 ? 'text-600': 'text-sm'}} h-fit text-center mt-1">{{ getTrackTotal(item)}} </div>
+                    </div>
+                    <div class="flex flex-column md:flex-row justify-content-between md:align-items-center flex-1 gap-4">
+                        <div class="flex" style="flex-direction: column">
+                            <div class="h-fit flex flex-row {{state==2 ? 'w-fit': 'w-48'}} hover-clickable-text {{state==2?'':'md:text-right'}} text-left">
+                                <div (click)="openDetails(item.id,item.name)" pTooltip="Playlist Details" class="font-bold {{state==2 ? 'text-base' : 'text-sm'}} mt-2 h-fit cursor-pointer hover-clickable-text underline flex-1">{{ capitalizeFirstLetter(item.name) }}</div>
+                            </div>
+                            <p-button *ngIf="state==2" (click)="pickPlaylist(item.id)" label="Pick Playlist" icon="pi pi-arrow-right" class="h-fit mt-2 hover-clickable-text relative"></p-button>
+                        </div>
+                        <div *ngIf="!(state==2)" class="flex flex-row ml-0 md:ml-5 mr-auto w-fit">
+                            <p-checkbox 
+                                [(ngModel)]="checkedPlaylists[item.id]" 
+                                [binary]="true" 
+                                inputId="binary" 
+                                (onChange)="onCheckboxChange($event, item.id, authService.personal?item.tracks.total:item.track_total)"
+                                pTooltip="Include in selection" 
+                                class="border-2 border-gray-400 border-solid rounded-lg w-fit"
+                            />
+                        </div>   
+                        <div>
+                            <i class="pi pi-trash text-red-500 mr-20 text-xl hover:text-red-700 hover:cursor-pointer" pTooltip="Empty Playlist" (click)="confirmEmpty($event, item.id)" *ngIf="!loadingDict[item.id] && authService.personal"></i>
+                            <p-progressSpinner ariaLabel="loading" styleClass="w-3rem h-3rem mr-16" strokeWidth="5" *ngIf="loadingDict[item.id]"/>                           
+                        </div> 
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </ng-template>
+
+    <ng-template pTemplate="grid" let-userPlaylists>
+        <div class="grid grid-nogutter">
+            <div class="col-12 sm:col-6 md:col-4 xl:col-6 p-2" *ngFor="let item of userPlaylists;">
+                <div class="p-4 border-1 surface-border surface-card border-round flex flex-column">
+                    <div class="surface-50 flex justify-content-center border-round p-3">
+                        <div class="mx-auto">
+                            <img class="border-round w-full" [src]="getImage(item)" [alt]="item.name" style="max-width: 100px;" />
+                        </div>
+                    </div>
+                    <div class="pt-4">
+                        <div class="flex flex-row justify-content-between align-items-start gap-2">
+                            <div>
+                                <div class="text-lg font-medium text-900 mt-1">{{ item.name }}</div>
+                            </div>
+                            <div class="surface-100 p-1" style="border-radius: 30px">
+                                <div class="surface-0 flex align-items-center gap-2 justify-content-center py-1 px-2" style="border-radius: 30px; box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.04), 0px 1px 2px 0px rgba(0, 0, 0, 0.06)">
+                                    <div class="text-600 h-fit">By: {{ item.owner.display_name }}</div>
+                                    <i class="pi pi-star-fill text-yellow-500"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-template>
+</p-dataView>
+
+<p-toast [life]="5000" [position]="toastPosition()" [breakpoints]="{ '575px': { width: '100%'} }"/>
+

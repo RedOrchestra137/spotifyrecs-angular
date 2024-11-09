@@ -1,0 +1,187 @@
+@import "../node_modules/primeng/resources/primeng.min.css";
+@import "primeicons/primeicons.css";
+@import "../node_modules/primeflex/primeflex.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.root{
+    --playerColour1: rgba(255, 255, 255, 0.1);
+    --playerColour2: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes scrollText {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+.now-playing-header {
+    white-space: nowrap;
+    font-weight: bold;
+}
+
+.icon-container {
+    min-width: 30px;
+    max-width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.now-playing-label {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.scrolling-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width:max-content;
+    overflow: hidden;
+}
+
+.scrolling-text-container {
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+    width: 100%;
+}
+
+.scroll-enabled span {
+    display: inline-block;
+    animation: scrollText 4s linear infinite;
+}
+
+
+app-spotify-interface{
+    width:100%
+}
+
+.spotLikeLogo{
+    filter: var(--spotify-like-logo);
+}
+
+.spotPlaylistLogo{
+    filter: var(--spotify-playlist-logo);
+}
+
+.p-button.p-button-success {
+    background-color: var(--spotify-green) !important; /* PrimeNG's green or your desired color */
+    border-color: var(--spotify-green) !important;
+    color: var(--button-text-color) !important;
+}
+.p-button.p-button-danger {
+    background-color: var(--red-700) !important; /* PrimeNG's green or your desired color */
+    border-color: var(--red-700) !important;
+    color: white !important;
+}
+.track-generator>.p-button{
+    width:100%;
+}
+
+.p-stepper-panels{
+    border-radius: 6px;
+}
+
+@keyframes nowplaying {
+    0%{background-position:0% 0%}
+    50%{background-position:100% 100%}
+    100%{background-position:0% 0%}
+}
+
+.dataview-playlist>.p-dataview>.p-dataview-header {
+    position:sticky; top:0; z-index:1
+}
+.dataview-playlistDetail>.p-dataview>.p-dataview-header {
+    position:sticky; top:0; z-index:1
+}
+.dataview-playlist-row:hover{
+    background-color: var(--hover-dataview-row)
+}
+.dataview-playlist-row-selected{
+    background-color: var(--hover-dataview-row)
+}
+.hover-clickable-text:hover{
+    color:var(--hover-clickable-text);
+}
+
+.purple-text{
+    font-weight:600;
+    color:var(--purple-text-color)
+}
+/* .purple-text-glow{
+    text-shadow: 0 2px 5px var(--purple-text-color)
+} */
+.p-chip{
+    height:fit-content;
+    width:100%;
+}
+.userMenuItem:hover{
+    color:var(--purple-text-color)
+}
+.p-chip-text{
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width:100%;
+}
+p-chip.p-element{
+    height:100%;
+    width:100%;
+    display:flex;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+.p-tooltip{
+    z-index:1006
+}
+.p-toast{
+    z-index:1002
+}
+.p-sidebar{
+    z-index:1002;
+    border-bottom: 1px solid var(--surface-border);
+    background-color: var(--sidebar-background);
+    backdrop-filter: var(--sidebar-backdrop);
+}
+.p-sidebar-mask{
+    background-color: transparent !important;
+}
+.p-float-label{
+    width:100%;
+}
+
+.p-speeddial{
+    position:static
+
+}
+.p-speeddial-linear{
+    display: flex;
+    align-items: center;
+    justify-content:start;
+}
+.p-speeddial-list{
+    display:var(--speeddial-open)
+}
+.p-speeddial-button{
+    width: 28px;
+    height: 28px;
+    margin-right:0.4rem;
+}
+.p-speeddial-action{
+    width: 40px;
+    height: 40px;
+    background:var(--speeddial-background-color)
+}
+.playlist-speeddial{
+  align-items: center;
+  display:flex;
+}
+.addOtherPlaylists-dropdown>.p-dropdown{
+  width: 100%;
+}

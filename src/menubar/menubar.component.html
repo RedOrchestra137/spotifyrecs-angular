@@ -1,0 +1,82 @@
+<style>
+    ::ng-deep .p-overlaypanel-content {
+        padding: 0 !important;
+    }
+</style>
+<p-menubar [model]="items">
+    <ng-template pTemplate="start">
+        <img (click)="toHome()" style="cursor: pointer;" src="https://firebasestorage.googleapis.com/v0/b/lebai-c181c.appspot.com/o/redorchid_whiteborder.png?alt=media&token=9d6a7d2c-92c9-4b85-818c-8010e7e749c9" alt="logo" height="50" width="50" class="mr-3 ml-2"/>
+        <!-- <img *ngIf="!darkMode" (click)="toHome()" style="cursor: pointer;" src="https://firebasestorage.googleapis.com/v0/b/lebai-c181c.appspot.com/o/blueorchid_whiteborder.png?alt=media&token=e9799d7b-ed7a-48dd-a1e1-1731b94e2e60" alt="logo" height="50" width="50" class="mr-3 ml-2"/> -->
+    </ng-template>
+    <ng-template pTemplate="item" let-item>
+        <ng-container *ngIf="item.route; else urlRef">
+            <a [routerLink]="item.route" class="p-menuitem-link">
+                <span [class]="item.icon"> </span>
+                <span class="ml-2">{{ item.label }}</span>
+            </a>
+        </ng-container>
+        <ng-template #urlRef>
+            <a *ngIf="item.url; else noLink" [href]="item.url" class="p-menuitem-link">
+                <span [class]="item.icon"></span>
+                <span class="ml-2">{{ item.label }}</span>
+            </a>
+        </ng-template>
+        <ng-template #noLink>
+            <div class="p-menuitem-link">
+                <span [class]="item.icon"></span>
+                <span class="ml-2">{{ item.label }}</span>
+            </div>
+        </ng-template>
+    </ng-template>
+    <ng-template pTemplate="end">
+        <div class="flex align-items-center gap-2 mr-0 md:mr-10 lg:mr-20">
+            <div class="flex flex-row align-items-center mt-auto mr-5" *ngIf="isAuthenticated && !onMobile">
+                <p-chip  pTooltip="Recommend only new artists?" class="my-auto ml-5 h-full cursor-pointer" [removable]="false" (click)="toggleArtists()">
+                  <img [src]="imgSourceArtists">
+                  <i class="pi {{!newArtists ? 'pi-times-circle text-red-500' : 'pi-check-circle text-green-500'}} " ></i>
+                </p-chip>
+                <p-chip pTooltip="Recommend only new albums?" class="my-auto ml-3 h-full cursor-pointer" [removable]="false" (click)="toggleAlbums()">
+                  <img [src]="imgSourceAlbums">
+                  <i class="pi {{!newAlbums ? 'pi-times-circle text-red-500' : 'pi-check-circle text-green-500'}}"></i>
+                </p-chip>
+                <p-chip pTooltip="{{popPref ? 'Prefer obscure recs' : 'Prefer popular recs'}}" pTooltipPosition="bottom" class="my-auto ml-3 h-full cursor-pointer" [removable]="false" (click)="togglePopularity()">
+                    <img [src]="imgSourcePopularity">
+                    <i class="pi {{!popPref ? 'pi-star-fill text-blue-500' : 'pi-star-fill text-purple-500'}}"></i>
+                </p-chip>
+            </div>
+            <!-- <p-button (click)="Login()" size="small" pButton pRipple class="p-button-success" *ngIf="!isAuthenticated">Log In</p-button> -->
+            <div class="flex align-items-center mr-0 md:mr-5">
+                <p *ngIf="isAuthenticated" [innerHTML]="username" class="mt-auto mb-auto mr-2 md:mr-3 text-right ml-auto text-sm md:text-base w-fit"></p>
+                <p-button (click)="toggleOverlay($event)" rounded="true">
+                    <p-avatar *ngIf="isAuthenticated" size="large" [image]="avatarImg" [label]="avatarLbl" shape="circle">
+                        <p-overlayPanel #op class="p-0">
+                            <div class="cursor-pointer" >
+                                <ul class="list-none p-0 m-0 flex flex-column">
+                                    <li class="userMenuItem px-4 pb-2 pt-3" (click)="openSettings()">
+                                        <a>Preferences</a>
+                                    </li>
+                                    <!-- <li class="userMenuItem px-4 py-2" (click)="openAbout()">
+                                        <a>About</a>
+                                    </li> -->
+                                    <li class="text-red-500 hover:text-red-700 px-4 py-3" (click)="Logout()">
+                                        Log Out
+                                    </li>
+                                </ul>
+                            </div>
+                        </p-overlayPanel>
+                    </p-avatar>
+                </p-button>
+            </div>
+        </div>
+    </ng-template>
+</p-menubar>
+<p-dialog
+header="About" 
+[(visible)]="aboutVisible" 
+[modal]="true" 
+[style]="{ width: '25rem' }"
+>
+    <ng-template pTemplate="content">
+        <p class="text-start">This is an open source project. It is distributed under the MIT license. Visit <a href="https://github.com/lebaiti/spotify-recs">Github</a> for more information.</p>
+    </ng-template>
+</p-dialog>

@@ -1,0 +1,8 @@
+.custom-icon-button {
+    width: 32px;   /* Adjust this based on icon size */
+    height: 32px;  /* Adjust this based on icon size */
+    padding: 4px;  /* Minimal padding */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }

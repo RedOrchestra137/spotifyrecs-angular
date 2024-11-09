@@ -1,0 +1,424 @@
+
+<div *ngIf="!isAuthenticated" class="flex align-items-start mr-20 pt-5 justify-content-center w-full h-fit">
+    <div class="flex flex-column w-full">
+        
+        <p-stepper [linear]="true" *ngIf="!authService.personal && registering" class="mx-auto">
+            <p-stepperPanel header="Spotify username">
+                <ng-template pTemplate="content" let-nextCallback="nextCallback" let-index="index">
+                    <div class="flex flex-row w-full h-fit">
+                        <div class="flex flex-column h-full w-full">
+                            <p class="text-xl text-center">Enter your <span style="color: var(--spotify-green);font-weight: semi-bold;">Spotify</span> username</p>
+                            <p class="text-md text-center">Can be found <a href="https://www.spotify.com/account/profile/" target="_blank" class="text-blue-500 underline">here</a></p>
+                            <div class="w-full mt-3 h-0 flex justify-content-center rounded-lg border-1" style="border-color: var(--spotify-green)"></div>
+                            <div class="w-full h-fit flex mt-6 mb-5 flex-column">
+                                <div class="flex flex-row align-items-center w-[75%] mx-auto">
+                                    <i class="pi pi-check mr-3 text-green-500" *ngIf="validUserName"></i>
+                                    <p-floatLabel class="flex-1">
+                                        <input variant="outlined"  
+                                        pInputText id="username" 
+                                        [(ngModel)]="authName" 
+                                        class="h-full pl-2 w-full py-3 px-2 border-2 border-solid"
+                                        tooltipPosition="bottom"
+                                        [style.border-color]="userNameError?'red':validUserName?'green':'rgba(255, 255, 255, 0.2)'"
+                                        (blur)="onUsernameChange($event)"
+                                        (focus)="userNameError=false;validUserName=false;">
+                                        <label for="username" class="w-full">Username</label>
+                                    </p-floatLabel>
+                                </div>
+                                <p class="text-red-500 text-sm text-start w-[75%] mx-auto mt-1" *ngIf="userNameError">Enter a valid username</p>
+                            </div>
+                                
+                        </div>
+                    </div>
+                    <div class="flex pt-4 justify-content-end">
+                        <p-button 
+                            label="Submit username" 
+                            icon="pi pi-arrow-right" 
+                            iconPos="right" 
+                            (onClick)="validUserName?nextCallback.emit():invalidUsername()" />
+                    </div>
+                    <p class="w-full text-start pl-2 text-sm text-blue-300 underline hover:cursor-pointer" (click)="Login()">Already have an account?</p>
+
+                </ng-template>
+            </p-stepperPanel>
+            <p-stepperPanel header="Prove it's you">
+                <ng-template pTemplate="content" let-prevCallback="prevCallback" let-nextCallback="nextCallback" let-index="index">
+                    <app-ownership-check #ownershipCheck [ownerShipCode]="ownerShipCode" [authName]="authName" [sessionId]="sessionId" (ownershipCallback)="tempPassword=ownershipCheck.tempPassword!;nextCallback.emit()"></app-ownership-check>
+                    
+                    <div class="flex pt-4 justify-content-between">
+                        <p-button 
+                            label="Back" 
+                            icon="pi pi-arrow-left" 
+                            (onClick)="prevCallback.emit()" />
+                    </div>
+                </ng-template>
+            </p-stepperPanel>
+            <p-stepperPanel header="Save your password">
+                <ng-template pTemplate="content" let-prevCallback="prevCallback" let-index="index">
+                    <div class="flex flex-column h-12rem">
+                        <div class="border-2 border-dashed surface-border border-round surface-ground py-2 flex flex-column justify-content-center align-items-center font-medium">
+                            <p>Your password: <span class="font-bold text-purple-300">{{tempPassword}}</span></p>
+                            <p>(can be changed later)</p>
+                        </div>
+                        <p-button (click)="Login()" size="small" pButton pRipple class="p-button-success h-20 mt-3 p-10 min-w-fit shadow-md hover:shadow-lg hover:shadow-slate-500 shadow-slate-500 mx-auto">
+                            <div class="flex align-items-center w-fit">
+                                <img src="https://storage.googleapis.com/pr-newsroom-wp/1/2023/05/Spotify_Primary_Logo_RGB_White.png" width="50" class="mr-5">
+                                <span class="font-bold h-fit mt-auto mb-auto mr-3 ml-auto">Log In</span>
+                            </div>
+                        </p-button>                    
+                    </div>
+                    <div class="flex pt-4 justify-content-start">
+                        <p-button label="Back" icon="pi pi-arrow-left" (onClick)="prevCallback.emit()" />
+                    </div>
+                </ng-template>
+            </p-stepperPanel>
+        </p-stepper>
+        
+        <p-card *ngIf="loggingIn" class="{{authService.onMobile?'w-full':'w-[35vw] mx-auto'}}">
+            <ng-template pTemplate="header">
+                <div class="flex flex-row w-full justify-content-center align-items-center pb-2 pt-4 px-2 text-xl font-bold">
+                    <div>
+                        <img *ngIf="themeService.isDarkMode" src="https://storage.googleapis.com/pr-newsroom-wp/1/2023/05/Spotify_Primary_Logo_RGB_White.png" class="mr-2 w-[40px]">
+                        <img *ngIf="!themeService.isDarkMode" src="https://storage.googleapis.com/pr-newsroom-wp/1/2023/05/Spotify_Primary_Logo_RGB_Black.png" class="mr-2 w-[40px]">
+                    </div>
+                    <div class="text-lg font-bold">Discover Anytime - Login</div>
+                </div>
+            </ng-template>
+            <ng-template pTemplate="content">
+                <div class="w-full h-full p-2 flex flex-column align-items-center justify-content-start gap-2">
+                    <p-floatLabel class="w-full p-2">
+                        <input 
+                        pInputText
+                        [(ngModel)]="spotifyLogin"
+                        class="h-fit py-3 pl-2 border-round border-1 border-gray-400 w-full">
+                        <label>Username</label>
+                    </p-floatLabel>
+                    <p-floatLabel class="w-full p-2 mt-2">
+                        <input
+                        type="password"
+                        pInputText
+                        [(ngModel)]="spotifyPassword"
+                        class="h-fit py-3 pl-2 border-round border-1 border-gray-400 w-full text-md">
+                        <label>Password</label>
+                    </p-floatLabel>
+                    <p class="w-full text-start pl-2 text-sm text-blue-300 underline hover:cursor-pointer" (click)="Register()">Forgot your password/No account yet?</p>
+                    <p class="w-full text-start pl-2 mt-2 text-sm text-blue-300 underline hover:cursor-pointer" (click)="startChangePassword()">Change password</p>
+                    <button pButton pRipple type="button" (click)="PublicLogin()" label="Log In" class="mt-4 p-button-success p-button-text p-button-rounded w-fit px-6 py-2 mx-auto"></button>
+                </div>
+
+            </ng-template>        
+        </p-card>
+        
+        <p-card *ngIf="changingPass" class="{{authService.onMobile?'w-full':'w-[35vw] mx-auto'}}">
+            <ng-template pTemplate="header">
+                <div class="flex flex-row w-full justify-content-center align-items-center pb-2 pt-4 px-2 text-xl font-bold">
+                    <div class="mr-2">
+                        <img *ngIf="themeService.isDarkMode" src="https://storage.googleapis.com/pr-newsroom-wp/1/2023/05/Spotify_Primary_Logo_RGB_White.png" class="mr-2 w-[40px]">
+                        <img *ngIf="!themeService.isDarkMode" src="https://storage.googleapis.com/pr-newsroom-wp/1/2023/05/Spotify_Primary_Logo_RGB_Black.png" class="mr-2 w-[40px]">
+                    </div>
+                    <div class="text-lg font-bold">Discover Anytime - Change Password</div>
+                </div>
+            </ng-template>
+            <ng-template pTemplate="content">
+                <div class="w-full h-full p-2 flex flex-column align-items-center justify-content-start gap-2">
+                    <p-floatLabel class="w-full p-2">
+                        <input 
+                        pInputText
+                        [(ngModel)]="spotifyLogin"
+                        class="h-fit py-3 pl-2 border-round border-1 border-gray-400 w-full">
+                        <label>Username</label>
+                    </p-floatLabel>
+                    <p-floatLabel class="w-full p-2">
+                        <input 
+                        type="password"
+                        pInputText
+                        [(ngModel)]="oldPass"
+                        class="h-fit py-3 pl-2 border-round border-1 border-gray-400 w-full text-md">
+                        <label>Old Password</label>
+                    </p-floatLabel>
+                    <p-floatLabel class="w-full p-2 mt-2">
+                        <input
+                        type="password"
+                        pInputText
+                        [(ngModel)]="newPass"
+                        class="h-fit py-3 pl-2 border-round border-1 border-gray-400 w-full text-md">
+                        <label>New Password</label>
+                    </p-floatLabel>
+                    <p-floatLabel class="w-full p-2 mt-1">
+                        <input
+                        type="password"
+                        pInputText
+                        [(ngModel)]="newPassConfirm"
+                        (ngModelChange)="passConfirmation=(newPassConfirm==newPass)"
+                        class="h-fit py-3 pl-2 border-round border-1 {{passConfirmation?'border-green-500':'border-red-500'}} w-full">
+                        <label>Confirm New Password</label>
+                    </p-floatLabel>
+                    <p class="w-full text-start pl-2 text-sm text-blue-300 underline hover:cursor-pointer" (click)="Login()">Back to Login</p>
+                    <button pButton pRipple type="button" (click)="ChangePassword()" label="Change Password" class="mt-4 p-button-success p-button-text p-button-rounded w-fit px-6 py-2 mx-auto"></button>
+                </div>
+
+            </ng-template>        
+        </p-card>
+
+        <div *ngIf="!registering && !loggingIn && !changingPass &&!loadingSaved" style="display: flex; flex-direction: column; align-items: center; justify-content: space-around; width:max-content; " class="mt-5 mx-auto">
+            <p class="w-full text-start pl-2">Don't have an account?</p>
+            <p-button (click)="Register()" size="small" pButton pRipple class="p-button-success mt-2 h-20 p-10 w-full min-w-fit shadow-md hover:shadow-lg hover:shadow-slate-500 shadow-slate-500 mx-auto">
+                <div class="flex align-items-center w-fit">
+                    <img src="https://storage.googleapis.com/pr-newsroom-wp/1/2023/05/Spotify_Primary_Logo_RGB_White.png" width="50" class="mr-5">
+                    <span class="font-bold h-fit mt-auto mb-auto mr-3 ml-auto">Register</span>
+                </div>
+            </p-button>
+            <p class="mt-5 w-full text-start pl-2">Already have an account?</p>
+            <p-button (click)="Login()" size="small" pButton pRipple class="p-button-success h-20 mt-3 p-10 min-w-fit w-full shadow-md hover:shadow-lg hover:shadow-slate-500 shadow-slate-500 mx-auto">
+                <div class="flex align-items-center w-fit">
+                    <img src="https://storage.googleapis.com/pr-newsroom-wp/1/2023/05/Spotify_Primary_Logo_RGB_White.png" width="50" class="mr-5">
+                    <span class="font-bold h-fit mt-auto mb-auto mr-3 ml-auto">Log In</span>
+                </div>
+            </p-button>
+        </div>
+
+    </div>
+</div>
+
+<div *ngIf="loadingSaved" class="flex flex-column justify-content-center w-full mt-2">
+    <p-progressBar mode="indeterminate" [style]="{'height': '6px'}"></p-progressBar>
+    <div class="mx-auto text-lg mt-5">Loading User Data, Please Wait...</div>
+</div>
+
+<div *ngIf="isAuthenticated && !loadingSaved" class="flex flex-column mr-20 w-full h-full">
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: space-around; width:max-content;" class="mt-5 ml-auto mr-auto">
+        <div *ngIf="playlistsSelectedLiked && authService.personal" class="min-w-fit w-full mb-2 h-fit max-h-16 overflow-y-auto px-2 border-2 border-gray-400 border-solid rounded-lg flex flex-row flex-wrap">
+            <div *ngFor="let playlist of seedPlaylistsLiked" class="w-1/2 h-fit my-auto px-1"><p-chip [label]="getPlaylistName(playlist).substring(0, 10)" class="my-auto" [image]="getPlaylistImg(playlist)" [alt]="getPlaylistName(playlist).substring(0, 10)" [removable]="true" (onRemove)="removePlaylistLiked(playlist)"></p-chip></div>
+        </div>
+        <p-button *ngIf="!loadingPlaylists" (click)="OpenUserPlaylists(1)" size="small" pButton pRipple class="p-button-success h-fit py-3 mb-5 min-w-fit w-full mr-auto my-auto justify-center font-bold">
+            <div class="flex flex-row align-items-center justify-between">
+                <img src="https://www.svgrepo.com/show/13666/heart.svg" width="25" class="spotLikeLogo mr-2">
+                <span>Select playlists to base recs on</span>
+                <!-- <i class="pi pi-info-circle h-fit w-fit my-auto p-2" pTooltip="For better recommendations, which works based on liked tracks" style="font-size: 1.1rem;" tooltipPosition="right" tooltip></i> -->
+            </div>
+        </p-button>
+        <div class="flex flex-row pb-20" *ngIf="authService.personal">
+            <p-button *ngIf="!loadingPlaylists" (click)="PrepPlaylists()" size="small" pButton pRipple class="p-button-success h-fit py-2 w-full my-auto justify-center font-bold">
+                <div class="flex flex-row align-items-center justify-between">
+                    <img src="https://www.svgrepo.com/show/13666/heart.svg" width="25" class="spotLikeLogo mr-2">
+                    <span>{{playlistsSelectedLiked ? "Add Selected Playlists to 'Liked'" : "Add all your playlists to 'Liked'"}}</span>
+                    <i class="pi pi-info-circle h-fit w-fit my-auto p-2" pTooltip="For better recommendations, which works based on liked tracks" style="font-size: 1.1rem;" tooltipPosition="right" tooltip></i>
+                </div>
+            </p-button>
+            <p *ngIf="!loadingPlaylists" class="mt-auto mb-auto mx-2">or</p>
+            <div *ngIf="!loadingPlaylists" class="mt-auto mb-auto" >
+                <p-button icon="pi pi-list" [rounded]="true" [text]="true" [raised]="true" (click)="OpenUserPlaylists(0)"  tooltipPosition="bottom" pTooltip="{{!playlistsSelectedLiked ? 'Select specific playlists to add' : 'Update Selection'}}"></p-button>
+            </div>
+            <p-progressSpinner 
+            *ngIf="loadingPlaylists"
+            />
+        </div>
+        
+        <label *ngIf="showPlaylistChip && authService.personal" for="username" class="min-w-fit w-full text-sm text-start pb-1">Playlist to store recommendations</label>
+        <div *ngIf="authService.personal" class="flex flex-row min-w-fit w-full">
+            <div class="w-full flex flex-column h-full">
+                <div class="border-2 border-gray-400 border-solid rounded-lg flex-1 w-full align-items-center flex">
+                    <p-chip *ngIf="showPlaylistChip" [label]="playlistChip.text.substring(0, 20)" class="my-auto ml-2 h-fit flex flex-1 max-w-64 whitespace-nowrap" [image]="playlistChip.image" [alt]="playlistChip.text" [removable]="true" (onRemove)="showPlaylistChip=false; playlistId=''"></p-chip>
+                    <p-floatLabel *ngIf="!showPlaylistChip" class="h-full w-full flex flex-grow-1">
+                        <input variant="outlined"  
+                        pInputText id="username" 
+                        [(ngModel)]="playlistId" 
+                        class="h-full pl-2 w-full"
+                        pTooltip="https://open.spotify.com/playlist/your_playlist_id?si=..." 
+                        tooltipPosition="bottom"
+                        (ngModelChange)="playlistChanged()">
+                        <label for="username" class="w-full">Playlist to store recs</label>
+                    </p-floatLabel>
+                </div>
+            </div>
+            <p class="mt-auto mb-auto mx-2">or</p>
+            <div class="mt-auto mb-auto"><p-button icon="pi pi-list" [rounded]="true" [text]="true" [raised]="true" (click)="OpenUserPlaylists(2)" pTooltip="Pick from your playlists" tooltipPosition="bottom"></p-button></div>
+        </div>
+        <small id="username-help">
+        </small>
+        <div class="flex-auto mt-6 min-w-fit w-full">
+            <label class="block font-bold mb-2 w-fit ml-3 mr-auto" for="locale-user">
+                Number of tracks to generate
+            </label>
+                <div class="flex flex-row w-full">
+                    <p-button size="small" (click)="decrement()" icon="pi pi-minus" [rounded]="true" />
+                    <p-progressBar [value]="trackAmt/200*100" class="w-full p-2">
+                        <ng-template pTemplate="content" let-value> 
+                            <span>{{trackAmt}}</span>    
+                        </ng-template>
+                    </p-progressBar>
+                    <p-button size="small" (click)="increment()" icon="pi pi-plus" [rounded]="true" width="10" />
+                </div>
+        </div> 
+        <div *ngIf="playlistsSelectedGenerated" class="max-w-sm min-w-fit w-full mb-2 mt-5 h-fit max-h-16 overflow-y-auto px-2 border-2 border-gray-400 border-solid rounded-lg flex flex-row flex-wrap">
+            <div *ngFor="let playlist of seedPlaylistsGenerated" class="w-1/2 h-full my-auto px-1"><p-chip [label]="getPlaylistName(playlist).substring(0, 10)" [image]="getPlaylistImg(playlist)" [alt]="getPlaylistName(playlist).substring(0, 10)" [removable]="true" (onRemove)="removePlaylistGenerated(playlist)"></p-chip></div>
+        </div>
+        <div class="flex flex-row mt-3 min-w-fit w-full justify-content-start">
+            <p-button *ngIf="!generating" (click)="GenerateTracks(playlistId)" pButton pRipple class="p-button-success h-fit py-2 w-full mt-auto mb-auto justify-center track-generator text-sm">
+                <div class="flex flex-row align-items-center justify-start w-full">
+                    <img src="https://www.svgrepo.com/show/528479/playlist-minimalistic-2.svg" width="30" class="spotPlaylistLogo">
+                    <span class="p-button-label ng-star-inserted" data-pc-section="label">{{ !playlistsSelectedGenerated ? 'Generate based on all saved tracks' : 'Generate based on selected playlists'}}<div></div></span>
+                </div>
+            </p-button>
+            <!-- <p *ngIf="!generating" class="mt-auto mb-auto mx-2">or</p>
+            <div *ngIf="!generating" class="mt-auto mb-auto"><p-button icon="pi pi-list" [rounded]="true" [text]="true" [raised]="true" (click)="OpenUserPlaylists(1)" bottom pTooltip="{{!playlistsSelectedGenerated ? 'Select specific playlists to base recommendations on' : 'Update Selection'}}"></p-button></div>   -->
+        </div>  
+
+        <div class="flex flex-row justify-content-space-between min-w-fit w-full text-sm mt-3">
+            <p class="mx-auto">Daily Tokens Left: <span class="font-semibold text-base {{user_limit < 10 ? 'text-red-500' : user_limit < 25 ? 'text-yellow-500' : 'text-green-500'}}">{{user_limit}}</span></p>
+        </div>
+        <div>
+            <p-progressSpinner 
+            *ngIf="generating"
+            />
+        </div>
+        <!-- <a  class="mx-auto" href="{{latestGeneratedPlaylistUrl}}" target="_blank"> -->
+        <div *ngIf="hasGenerated && !generating" (click)="openDetails()" class="cursor-pointer flex flex-column justify-content-center mt-14 border-2 border-gray-400 border-solid rounded-lg pb-3 px-3 {{themeService.isDarkMode ? 'bg-slate-800' : 'bg-slate-300'}} backdrop-blur-sm">
+            <p class="mb-2 mt-3 font-semibold {{themeService.isDarkMode ? 'text-violet-400' : 'text-violet-700'}} drop-shadow-lg">Latest Collaborative Playlist For You</p>
+            <img *ngIf="latestGeneratedPlaylistImage.length > 0" [src]="latestGeneratedPlaylistImage" class="mx-auto w-[50px]">
+            <i *ngIf="latestGeneratedPlaylistImage.length == 0" class="{{themeService.isDarkMode ? 'text-violet-400' : 'text-violet-700'}} pi pi-list text-[30px] mx-auto"></i>
+        </div>
+        <!-- </a> -->
+
+    </div>
+
+</div>
+
+
+<p-dialog 
+    header="{{playlistDialogState==0 ? 'Select playlists to add to liked': playlistDialogState==1 ? 'Select playlists to base recommendations on' :  'Pick a playlist to store recommendations'}}"
+    [modal]="true"
+    [(visible)]="showPlaylistDialog" 
+    [style]="{ width: '80vw' }" 
+    [breakpoints]="{ '1199px': '85vw', '575px': '100vw' }" 
+    [maximizable]="true"
+    [dismissableMask]="true"
+    [baseZIndex]="10005"
+    >
+    <app-playlist #plComponent (playlistSelected)="playlistSelected($event)" 
+    (selectedPlaylists)="selectedPlaylists($event)" (clearedSelection)="selectedPlaylistsCleared()"
+    (addingOtherPlaylists)="addingOtherPlaylists()" (openingDetails)="openDetails($event)"
+    (creatingPlaylist)="createPlaylist()"
+    >
+    </app-playlist>
+</p-dialog>
+<p-dialog
+    header="New Recommendations"
+    [modal]="true"
+    [(visible)]="showScreenerDialog" 
+    [style]="{ width: '80vw' }" 
+    [breakpoints]="{ '1199px': '85vw', '575px': '100vw' }" 
+    [maximizable]="true"
+    [dismissableMask]="true"
+    [baseZIndex]="10006"
+    >
+    <app-screener #screener></app-screener>
+</p-dialog>
+<p-dialog 
+    header="Create Playlist"
+    [(visible)]="showCreatePlaylistDialog"
+    [modal]="true"
+    [style]="{ width: '50vw' }" 
+    [breakpoints]="{ '1199px': '50vw', '575px': '90vw' }" 
+    [draggable]="false"
+    [dismissableMask]="true"
+    [maximizable]="true"
+    [baseZIndex]="10007"
+    >
+    <app-create-playlist #createPlComponent (_playlistCreated)="playlistCreated($event)"></app-create-playlist>
+</p-dialog>
+<p-dialog
+    header="Add another Playlist"
+    [(visible)]="showOtherPlaylistDialog"
+    [modal]="true"
+    [style]="{ width: '50vw', height: '90vh' }" 
+    [breakpoints]="{ '1199px': '50vw', '575px': '100vw' }" 
+    [draggable]="false"
+    [dismissableMask]="true"
+    [maximizable]="true"
+    [baseZIndex]="10008"
+    >
+    <app-add-other-playlist #addOtherPlComponent (addedOtherPlaylists)="addedOtherPlaylists($event)"></app-add-other-playlist>
+</p-dialog> 
+<p-dialog 
+    header="Playlist: {{capitalizeFirstLetter(detailsName)}}" 
+    [(visible)]="showPlaylistDetailDialog" 
+    [modal]="true" 
+    [style]="{ width: '80vw' }" 
+    [breakpoints]="{ '1199px': '85vw', '575px': '100vw' }" 
+    [draggable]="false" 
+    [maximizable]="true"
+    [dismissableMask]="true"
+    class="playlistDetailOverlay"
+    [baseZIndex]="10009"
+    >
+    <app-playlist-detail #plDetailsComponent (playingTrack)="playingTrack($event)" class="w-full"></app-playlist-detail>
+</p-dialog>
+<p-dialog
+  [(visible)]="showYoutubeDialog"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: '90vw', height: '100vh', display:'flex'}" 
+  [breakpoints]="{ '1199px': '90vw', '575px': '100vw' }" 
+  [resizable]="true"
+  [closable]="true"
+  [dismissableMask]="true"
+  [keepInViewport]="true"
+  [maximizable]="true"
+  (onShow)="initPlayer()"
+  (onHide)="onYoutubeClose()"
+  class="overflow-hidden"
+  [baseZIndex]="10010"
+  #ytDialog
+  >  
+  <ng-template pTemplate="header">
+    <div class="flex w-full" id="ytDialogHeader">
+
+        <div class="flex flex-row align-items-center justify-content-between w-full mx-2">
+            <!-- Shuffle Button -->
+            <div class="icon-container mr-3 ml-auto">
+                <button pButton pRipple class="p-button-rounded p-button-text p-button-plain {{ytComponent.shuffled ? 'text-purple-'+themeService.getShade(400) : 'text-gray-'+themeService.getShade(400)}}" 
+                pTooltip ="{{ytComponent.shuffled ? 'Unshuffle' : 'Shuffle'}}" (click)="ytComponent.onShuffle()">
+                    <i class="material-icons">shuffle</i>
+                </button>
+            </div>
+        
+            <!-- Check Button -->
+            <i class="icon-container mx-2 text-lg pi pi-check-square cursor-pointer {{addedToSavedDict[ytComponent.currentTrack.track!.id] ? 'text-green-'+themeService.getShade(400) : 'text-gray-'+themeService.getShade(400)}}" pTooltip="{{addedToSavedDict[ytComponent.currentTrack.track!.id] ? 'Remove from Saved Tracks' : 'Add to Saved Tracks'}}" (click)="EditSaved([ytComponent.currentTrack])"></i>
+        
+            <!-- Now Playing Text with Scrolling Effect -->
+            <div class="scrolling-container mx-2">
+                <span class="now-playing-label">Now playing:</span>
+                <div #scrollTextContainer class="max-w-[33vw] scrolling-text-container">
+                    <span #scrollingText [ngStyle]="ytHeaderStyle" class="text-center min-w-[33vw] w-fit {{isScrollingText?'now-playing-header':''}}">
+                        {{ getYoutubeHeader() }}
+                    </span>
+                </div>
+                <!-- Popularity Text -->
+                <p class="font-bold popularity-label w-full text-sm text-center {{themeService.getPopularityColor(ytComponent.currentTrack)}} mx-2">
+                    {{themeService.getPopularityText(ytComponent.currentTrack)}}
+                </p>
+            </div>
+        
+
+        
+            <!-- Spotify Button -->
+            <div pTooltip="Open in Spotify" class="icon-container ml-3 mr-auto">
+                <a href="https://open.spotify.com/track/{{ytComponent?.currentTrack?.track?.id ?? ''}}" target="_blank">
+                    <button pButton pRipple class="p-button-rounded p-button-text">
+                        <img src="https://www.svgrepo.com/show/512899/spotify-162.svg" width="30" class="spotLikeLogo">
+                    </button>
+                </a>
+            </div>
+
+        </div>
+    </div>
+  </ng-template>
+  <app-youtube (trackChange)="ytTrackChange()" class="flex flex-1 w-full" #ytComponent></app-youtube>
+</p-dialog>
+
+
+<p-confirmDialog />
+
+
+<p-toast [life]="5000" [position]="toastPosition()" [breakpoints]="{ '575px': { width: '100%'} }"/>    
