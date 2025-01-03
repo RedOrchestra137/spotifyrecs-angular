@@ -108,7 +108,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
 import { SafePipe } from './pipe';
 
-
 @NgModule({
   imports: [
     OverlayPanelModule,
@@ -218,8 +217,7 @@ import { SafePipe } from './pipe';
     IconFieldModule,
     InputIconModule,
     AutoFocusModule,
-    TranslateModule.forRoot(),
-    
+    TranslateModule.forRoot(),    
   ],
   exports: [
     OverlayPanelModule,

@@ -22,7 +22,7 @@
                     icon="pi pi-plus" >
                 </p-button>
                 <p-button 
-                    *ngIf="(state==2)"
+                    *ngIf="(state==2)&&authService.personal"
                     class="h-full w-fit text-sm mt-2 mb-auto p-button mr-auto pl-3 pr-3 lg:mr-0 lg:my-auto lg:mx-auto" 
                     (click)="createPlaylist()" 
                     label="Create Playlist" 
@@ -87,7 +87,7 @@
                             <div class="h-fit flex flex-row {{state==2 ? 'w-fit': 'w-48'}} hover-clickable-text {{state==2?'':'md:text-right'}} text-left">
                                 <div (click)="openDetails(item.id,item.name)" pTooltip="Playlist Details" class="font-bold {{state==2 ? 'text-base' : 'text-sm'}} mt-2 h-fit cursor-pointer hover-clickable-text underline flex-1">{{ capitalizeFirstLetter(item.name) }}</div>
                             </div>
-                            <p-button *ngIf="state==2" (click)="pickPlaylist(item.id)" label="Pick Playlist" icon="pi pi-arrow-right" class="h-fit mt-2 hover-clickable-text relative"></p-button>
+                            <p-button *ngIf="state==2 && authService.personal" (click)="pickPlaylist(item.id)" label="Pick Playlist" icon="pi pi-arrow-right" class="h-fit mt-2 hover-clickable-text relative"></p-button>
                         </div>
                         <div *ngIf="!(state==2)" class="flex flex-row ml-0 md:ml-5 mr-auto w-fit">
                             <p-checkbox 
@@ -103,6 +103,10 @@
                             <i class="pi pi-trash text-red-500 mr-20 text-xl hover:text-red-700 hover:cursor-pointer" pTooltip="Empty Playlist" (click)="confirmEmpty($event, item.id)" *ngIf="!loadingDict[item.id] && authService.personal"></i>
                             <p-progressSpinner ariaLabel="loading" styleClass="w-3rem h-3rem mr-16" strokeWidth="5" *ngIf="loadingDict[item.id]"/>                           
                         </div> 
+                        <div>
+                            <i class="pi pi-trash text-red-500 mr-20 text-xl hover:text-red-700 hover:cursor-pointer" pTooltip="Remove Playlist" (click)="confirmDelete($event, item.id)" *ngIf="!removingDict[item.id] && item.generated"></i>
+                            <p-progressSpinner ariaLabel="deleting" styleClass="w-3rem h-3rem mr-16" strokeWidth="5" *ngIf="removingDict[item.id]"/>                           
+                        </div>
                     </div>
                 </div>
             </div>
@@ -138,5 +142,5 @@
     </ng-template>
 </p-dataView>
 
-<p-toast [life]="5000" [position]="toastPosition()" [breakpoints]="{ '575px': { width: '100%'} }"/>
+<p-toast [life]="2000" [position]="toastPosition()" [breakpoints]="{ '575px': { width: '100%'} }"/>
 

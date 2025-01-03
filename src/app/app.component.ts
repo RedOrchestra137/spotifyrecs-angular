@@ -4,10 +4,11 @@ import { PrimeNGConfig } from 'primeng/api';
 import {TranslateModule, TranslateService} from '@ngx-translate/core';
 import { MenubarComponent } from '../menubar/menubar.component';
 import { ImportsModule } from './imports';
-import { SpotifyAuthService } from '../spotify-interface/auth/spotify-auth.service';
+import { SpotifyAuthService } from '../services/spotify-auth.service';
 import { ThemeService } from '../services/theme.service';
 import { InputSwitchChangeEvent } from 'primeng/inputswitch';
 import { LocalizationService } from '../services/localization.service';
+import { ProgressService } from '../services/progress.service';
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -16,7 +17,7 @@ import { LocalizationService } from '../services/localization.service';
     TranslateModule
   ], 
   providers: [
-    SpotifyAuthService, ThemeService, LocalizationService
+    SpotifyAuthService, ThemeService, LocalizationService, ProgressService
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'

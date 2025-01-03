@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Spotify Discover Anytime</string>
+    <string name="title_activity_main">Spotify Discover Anytime</string>
+    <string name="package_name">spotify.recs.anytime</string>
+    <string name="custom_url_scheme">spotify.recs.anytime</string>
+</resources>

@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
 import { HTTP_INTERCEPTORS, provideHttpClient } from '@angular/common/http';
-import { AuthInterceptService } from '../spotify-interface/auth/auth-intercept.service';
+import { AuthInterceptService } from '../services/auth-intercept.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [

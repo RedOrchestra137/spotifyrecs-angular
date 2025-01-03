@@ -2,11 +2,12 @@ import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angu
 import { MenuItem } from 'primeng/api';
 import { MenubarModule } from 'primeng/menubar';
 import { ImportsModule } from '../app/imports';
-import { SpotifyAuthService } from '../spotify-interface/auth/spotify-auth.service';
+import { SpotifyAuthService } from '../services/spotify-auth.service';
 import { OverlayPanel } from 'primeng/overlaypanel';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 import { ThemeService } from '../services/theme.service';
+import {SpotifyUser } from '../spotify-interface/response objects/UserResponse';
 
 
 @Component({
@@ -23,11 +24,25 @@ export class MenubarComponent implements OnInit{
   preferencesVisible = false
   aboutVisible = false
   items: MenuItem[] | undefined;
+  localTime = new Date().getHours() + ":" + (new Date().getMinutes()<=9 ? "0":"") + new Date().getMinutes();
+  timeFlairIcon:string = ""
+  timeIcons = {
+    "early_morning": "https://www.svgrepo.com/show/402767/sunrise-over-mountains.svg",
+    "morning": "https://www.svgrepo.com/show/272177/mountain-dawn.svg",
+    "noon": "https://www.svgrepo.com/show/277497/lunch-box.svg",
+    "afternoon": "https://www.svgrepo.com/show/513351/sun.svg",
+    "evening": "https://www.svgrepo.com/show/358032/moonset.svg",
+    "night":"https://www.svgrepo.com/show/196402/night-sleep.svg"
+  }
   toggleOverlay(event: Event) {
     this.overlayPanel.toggle(event);
   }
-  constructor(private _spotifyAuth:SpotifyAuthService, private route:ActivatedRoute,private router:Router, private themeService:ThemeService) { 
-    
+  constructor(public _spotifyAuth:SpotifyAuthService, private route:ActivatedRoute,private router:Router, private themeService:ThemeService) { 
+    setInterval(() => {
+      this.localTime = new Date().getHours() + ":" + (new Date().getMinutes()<=9 ? "0":"") + new Date().getMinutes();
+      let hour = new Date().getHours()
+      this.timeFlairIcon = hour >= 5 && hour < 8 ? this.timeIcons.early_morning : hour >= 8 && hour < 12 ? this.timeIcons.morning : hour >= 12 && hour < 13 ? this.timeIcons.noon : hour >= 13 && hour < 17 ? this.timeIcons.afternoon : hour >= 17 && hour < 23 ? this.timeIcons.evening : this.timeIcons.night
+    }, 5000);
   }
 
   ngOnInit() {
@@ -40,22 +55,25 @@ export class MenubarComponent implements OnInit{
 
           }
       ]
-      if(this._spotifyAuth.checkTokens()){
-        console.log("Token ok")
+      if(this._spotifyAuth.personal){
+        if(this._spotifyAuth.checkTokens()){
+          console.log("Token ok")
+        }
+        else{
+          console.log("No token")
+          this.route.queryParamMap.pipe(
+            map((params) => ({
+              code: params.get('code') ?? '',
+              state: params.get('state') ?? ''
+            }))
+            ).subscribe(async (result) => {
+            if (result.code && result.state) {
+              console.log("Code and state ok")
+              await this._spotifyAuth.SetTokens(result.code, result.state);
+            }
+          })
       }
-      else{
-        console.log("No token")
-        this.route.queryParamMap.pipe(
-          map((params) => ({
-            code: params.get('code') ?? '',
-            state: params.get('state') ?? ''
-          }))
-          ).subscribe(async (result) => {
-          if (result.code && result.state) {
-            console.log("Code and state ok")
-            await this._spotifyAuth.SetTokens(result.code, result.state);
-          }
-        })
+      
     }
   }
   public get isAuthenticated (): boolean {
@@ -72,7 +90,7 @@ export class MenubarComponent implements OnInit{
     return ""
   }
   public get username (): string {
-    return this._spotifyAuth.authenticatedUser?.display_name??""
+    return this._spotifyAuth?.authenticatedUser?.display_name??""
   }
   public get darkMode (): boolean {
     if(!this.themeService.isDarkMode) return false

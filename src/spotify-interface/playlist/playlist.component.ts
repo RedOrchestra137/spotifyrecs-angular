@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { SpotifyAuthService } from '../auth/spotify-auth.service';
+import { SpotifyAuthService } from '../../services/spotify-auth.service';
 import { Routes } from '../../../routes';
 import { ImportsModule } from '../../app/imports';
 import { DataView, DataViewModule } from 'primeng/dataview';
@@ -107,14 +107,15 @@ export class PlaylistComponent implements OnInit{
   }
 
   loadingDict:Dictionary<boolean> = {}
+  removingDict:Dictionary<boolean> = {}
   
   sortOptions:any = [
 
   ]
 
   sortOrder: number = -1;
-  sortField: any = 'tracks.total';
-  sortKey: any = 'tracks.total';
+  sortField: any = 'track_total';
+  sortKey: any = 'track_total';
   ascendingSort: boolean = false;
 
   speedDialOpened: boolean = false
@@ -243,7 +244,7 @@ export class PlaylistComponent implements OnInit{
     else{
       ret = this.userPlaylistsMultiple
     }
-    return ret.filter(playlist => playlist.name.includes(this.filterValue))
+    return ret.filter(playlist => playlist.name.toLowerCase().includes(this.filterValue.toLowerCase()))
     .sort(
       (a,b)=>{
         let aVal:any = a
@@ -354,6 +355,32 @@ export class PlaylistComponent implements OnInit{
     let element = document.querySelector('.playlist-speeddial>.p-speeddial-linear>.p-speeddial-list') as HTMLElement;
     element.style.setProperty('--speeddial-open', 'none');
     this.speedDialOpened = false
+  }
+
+  confirmDelete(event: Event, id:string) {
+    this.confirmationService.confirm({
+        target: event.target as EventTarget,
+        message: 'Are you sure you want to remove this playlist?',
+        header: 'Confirmation',
+        icon: 'pi pi-exclamation-triangle',
+        acceptButtonStyleClass:"ml-3",
+        acceptLabel:"Delete",
+        rejectLabel:"Cancel",
+        accept: async () => {
+            this.removingDict[id] = true
+            this._http.delete(Routes.Spotify.DeletePlaylist(id), {headers:{"middle-man":"true"}}).subscribe(async (response) => {
+              this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Playlist deleted' });
+              this.removingDict[id] = false
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              await this.ngOnInit()
+            }, (error) => { this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message }); 
+            this.removingDict[id] = false
+          })
+        },  
+        reject: () => {
+          this.removingDict[id] = false
+        }
+    })
   }
 
   confirmEmpty(event: Event, id:string) {
@@ -533,7 +560,6 @@ export class PlaylistComponent implements OnInit{
   async refresh(){
     this.refreshing = true
     await this.ngOnInit()
-    await this.loadPlaylists()    
     this.refreshing = false
   }
 }

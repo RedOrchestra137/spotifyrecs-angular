@@ -1,3 +1,156 @@
+import { NumberInput } from "@angular/cdk/coercion"
+
+export interface IAcousticBrainzData{
+    highlevel: {
+        danceability: {
+            all: {
+                danceable: number,
+                not_danceable: number
+            },
+            probability: number,
+            value: string,
+        },
+        gender: {
+            all: {
+                female: number,
+                male: number
+            },
+            probability: number
+            value: string,
+        },
+        genre_dortmund: {
+            all: {
+                alternative: number,
+                blues: number,
+                electronic: number,
+                folkcountry: number,
+                funksoulrnb: number,
+                jazz: number,
+                pop: number,
+                raphiphop: number,
+                rock: number
+            },
+            probability: number,
+            value: string,
+        },
+        genre_electronic: {
+            all: {
+                ambient: number,
+                dnb: number,
+                house: number,
+                techno: number,
+                trance: number
+            },
+            probability: number,
+            value: string,
+        },
+        mood_acoustic: {
+            all: {
+                acoustic: number,
+                not_acoustic: number
+            },
+            probability: number,
+            value: string,
+        },
+        mood_aggressive: {
+            all: {
+                aggressive: number,
+                not_aggressive: 1
+            },
+            probability: number,
+            value: string,
+        },
+        mood_electronic: {
+            all: {
+                electronic: number,
+                not_electronic: number
+            },
+            probability: number,
+            value: string,
+        },
+        mood_happy: {
+            all: {
+                happy: number,
+                not_happy: number
+            },
+            probability:number,
+            value: string,
+        },
+        mood_party: {
+            all: {
+                not_party:number,
+                party: number
+            },
+            probability:number,
+            value: string,
+        },
+        mood_relaxed: {
+            all: {
+                not_relaxed: number,
+                relaxed: number
+            },
+            probability: number,
+            value: string
+        },
+        mood_sad: {
+            all: {
+                not_sad: number,
+                sad: number
+            },
+            probability: number,
+            value: string,
+        },
+        moods_mirex: {
+            all: {
+                Cluster1: number,
+                Cluster2: number,
+                Cluster3: number,
+                Cluster4: number,
+                Cluster5: number
+            },
+            probability: number,
+            value: string,
+        },
+        timbre: {
+            all: {
+                bright: number,
+                dark: number
+            },
+            probability: number,
+            value: string,
+        },
+        tonal_atonal: {
+            all: {
+                atonal: number,
+                tonal: number,
+            },
+            probability: 1,
+            value: string,
+        },
+        voice_instrumental: {
+            all: {
+                instrumental: number,
+                voice: number
+            },
+            probability: number,
+            value: string,
+        }
+    },
+    metadata: {
+        audio_properties: {
+            analysis_sample_rate: number,
+            bit_rate: number,
+            codec: string,
+            length: number,
+            md5_encoded: string
+        },
+        tags: {
+            album: string[]
+            artist: string[]
+        }
+        }
+    }
+
 export interface ITrack {
     added_at: string|undefined;
     added_by: {
@@ -85,17 +238,19 @@ export interface ITrack {
       uri: string;
       is_local: boolean;
     }|undefined;
+    features: IAcousticBrainzData|undefined;
     GetImage(): string;
     GetUrl(): string;
     GetArtist(): string;
     GetAlbumName(): string;
     GetAlbumUrl(): string;
     GetTitle(): string;
-
+    ToSavedTrack(album_id:string, artist_id:string): Promise<SavedTrack>;
   }
 
 export class Track implements ITrack {
   added_at: string|undefined;
+  embed_url: string|undefined;
   added_by: {
     external_urls: {
       spotify: string;
@@ -157,6 +312,7 @@ export class Track implements ITrack {
       reason: string;
     }; name: string; popularity: number; preview_url: string; track_number: number; type: string; uri: string; is_local: boolean;
   }|undefined;
+  features: IAcousticBrainzData|undefined;
   static FromObject(object:any){
     let track = new Track();
     track.added_at = object?.added_at??''
@@ -201,6 +357,30 @@ export class Track implements ITrack {
     }
     return ""
   }
+  async ToSavedTrack(): Promise<SavedTrack> {
+    let savedTrack = {
+      added_at: this.added_at??'',
+      album_id: this.track?.album?.id??'',
+      artist_ids: this.track?.artists.map(x => x.id)??[],
+      track_name: this.track?.name??'',
+      artist_name: this.track?.artists[0]?.name??'',
+      track_length: this.track?.duration_ms??0,
+      id: this.track?.id??'',
+      saved: false,
+      accounted_for: 0,
+      playlist_ids: [],
+      favourite: false,
+      youtube_url: '',
+      popularity: this.track?.popularity??0,
+      available_markets: this.track?.album?.available_markets.length??0,
+      album_name: this.track?.album?.name??'',
+      album_release_date: this.track?.album?.release_date??'',
+      album_url: this.GetAlbumUrl(),
+      album_image: this.GetImage(),
+      preview_url: this.track?.preview_url??''
+    }
+    return savedTrack
+  }
 
 }
 
@@ -209,7 +389,8 @@ export interface TrackView {
   id:string,
   artist_ids:string[],
   album_id:string,
-  youtube_url:string
+  youtube_url:string,
+  accounted_for:number
 }
 export interface PlaylistTracksResponse {
     href: string;
@@ -346,7 +527,10 @@ export class Playlist implements IPlaylist {
       owner_uri: playlist.owner?.uri??"",
       is_following: false,
       id:playlist.id??"",
-      owner_id:playlist.owner?.id??""
+      owner_id:playlist.owner?.id??"",
+      last_refreshed:0,
+      generated:false,
+      tracks:[]
     }
     return publicPlaylist
   }
@@ -400,14 +584,30 @@ export interface PlaylistDetail extends IPlaylist {
 
 
 export interface SavedTracksResponse{
-    savedTracks:Array<Track>;
+    savedTracks:Array<SavedTrack>;
     lastAdded:number
 }
 
 export interface SavedTrack{
-  addedAt: string;
-  id:string
-  artist_id:string
+  "added_at": string,
+  "album_id": string,
+  "artist_ids": Array<string>,
+  "track_name": string,
+  "artist_name": string,
+  "track_length": number,
+  "id": string,
+  "saved": boolean,
+  "accounted_for": number
+  "playlist_ids": Array<string>
+  "favourite": boolean,
+  "youtube_url": string,
+  "popularity":number,
+  "available_markets":number,
+  "album_name":string,
+  "album_release_date":string,
+  "album_url":string,
+  "album_image":string,
+  "preview_url":string
 }
 
 export interface Dictionary<T> {
@@ -424,5 +624,8 @@ export interface PublicPlaylist{
   "owner_uri": string,
   "is_following": boolean,
   "id":string, 
-  "owner_id":string
+  "owner_id":string,
+  "last_refreshed":number,
+  "generated":boolean,
+  "tracks":Array<SavedTrack>
 }

@@ -3,13 +3,26 @@
         #newPlaylistDropdown
         [options]="searchedPlaylists || []"
         [(ngModel)]="newPlaylist"
-        optionLabel="name"
         [filter]="true"
-        (onFilter)="searchPlaylists($event)"
         (onChange)="onSelectionChange($event); newPlaylist!=null?newPlaylistDropdown.clear():null"
         [showClear]="true"
         placeholder="Find a playlist by name"
         class="w-full border-2 border-gray-400 border-solid rounded-lg addOtherPlaylists-dropdown">
+        <ng-template pTemplate="filter">
+            <div class="flex gap-1">
+                <div class="p-inputgroup" (click)="$event.stopPropagation()">
+                    <span class="p-inputgroup-addon"><i class="pi pi-search"></i></span>
+                    <input 
+                        type="text"
+                        pInputText
+                        placeholder="Search a playlist" 
+                        [(ngModel)]="filterValue"
+                        (keydown)="typingIndex=0"
+                        class="pl-2"
+                        [style.width]="overlayWidth"/>
+                </div>
+            </div>
+        </ng-template>
         <ng-template pTemplate="selectedItem" let-selectedOption>
             <div class="flex align-items-center gap-2 truncate pl-2">
                 <img src="{{ getImage(selectedOption) }}" width="40" height="40"/>

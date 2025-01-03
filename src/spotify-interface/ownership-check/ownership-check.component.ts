@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, EventEmitter, Input, input, Output } from '@angular/core';
-import { SpotifyAuthService } from '../auth/spotify-auth.service';
+import { SpotifyAuthService } from '../../services/spotify-auth.service';
 import { MessageService } from 'primeng/api';
 import { Routes } from '../../../routes';
 import { firstValueFrom } from 'rxjs';

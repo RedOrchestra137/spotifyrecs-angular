@@ -37,7 +37,7 @@
                             iconPos="right" 
                             (onClick)="validUserName?nextCallback.emit():invalidUsername()" />
                     </div>
-                    <p class="w-full text-start pl-2 text-sm text-blue-300 underline hover:cursor-pointer" (click)="Login()">Already have an account?</p>
+                    <p class="w-full text-start pl-2 text-sm text-blue-300 underline" ><span class="hover:cursor-pointer" (click)="Login()">Already have an account?</span></p>
 
                 </ng-template>
             </p-stepperPanel>
@@ -86,13 +86,14 @@
             </ng-template>
             <ng-template pTemplate="content">
                 <div class="w-full h-full p-2 flex flex-column align-items-center justify-content-start gap-2">
-                    <p-floatLabel class="w-full p-2">
+                    <p-floatLabel class="w-full p-2 pb-0">
                         <input 
                         pInputText
                         [(ngModel)]="spotifyLogin"
                         class="h-fit py-3 pl-2 border-round border-1 border-gray-400 w-full">
                         <label>Username</label>
                     </p-floatLabel>
+                    <a class="w-full text-start pl-2 pb-2 text-sm text-blue-300 underline hover:cursor-pointer" href="https://www.spotify.com/account/profile/" target="_blank">Can be found here</a>
                     <p-floatLabel class="w-full p-2 mt-2">
                         <input
                         type="password"
@@ -168,7 +169,7 @@
                     <span class="font-bold h-fit mt-auto mb-auto mr-3 ml-auto">Register</span>
                 </div>
             </p-button>
-            <p class="mt-5 w-full text-start pl-2">Already have an account?</p>
+            <p class="mt-5 w-full text-start pl-2"><span>Already have an account?</span></p>
             <p-button (click)="Login()" size="small" pButton pRipple class="p-button-success h-20 mt-3 p-10 min-w-fit w-full shadow-md hover:shadow-lg hover:shadow-slate-500 shadow-slate-500 mx-auto">
                 <div class="flex align-items-center w-fit">
                     <img src="https://storage.googleapis.com/pr-newsroom-wp/1/2023/05/Spotify_Primary_Logo_RGB_White.png" width="50" class="mr-5">
@@ -180,9 +181,9 @@
     </div>
 </div>
 
-<div *ngIf="loadingSaved" class="flex flex-column justify-content-center w-full mt-2">
-    <p-progressBar mode="indeterminate" [style]="{'height': '6px'}"></p-progressBar>
-    <div class="mx-auto text-lg mt-5">Loading User Data, Please Wait...</div>
+<div *ngIf="loadingSaved" class="flex flex-column justify-content-center w-[80%] mt-2 mx-auto">
+    <p-progressBar [value]="authService.loadingSavedProgress"></p-progressBar>
+    <div class="mx-auto text-sm mt-5" [innerHTML]="authService.loadingSavedMessage"></div>
 </div>
 
 <div *ngIf="isAuthenticated && !loadingSaved" class="flex flex-column mr-20 w-full h-full">
@@ -190,13 +191,22 @@
         <div *ngIf="playlistsSelectedLiked && authService.personal" class="min-w-fit w-full mb-2 h-fit max-h-16 overflow-y-auto px-2 border-2 border-gray-400 border-solid rounded-lg flex flex-row flex-wrap">
             <div *ngFor="let playlist of seedPlaylistsLiked" class="w-1/2 h-fit my-auto px-1"><p-chip [label]="getPlaylistName(playlist).substring(0, 10)" class="my-auto" [image]="getPlaylistImg(playlist)" [alt]="getPlaylistName(playlist).substring(0, 10)" [removable]="true" (onRemove)="removePlaylistLiked(playlist)"></p-chip></div>
         </div>
-        <p-button *ngIf="!loadingPlaylists" (click)="OpenUserPlaylists(1)" size="small" pButton pRipple class="p-button-success h-fit py-3 mb-5 min-w-fit w-full mr-auto my-auto justify-center font-bold">
-            <div class="flex flex-row align-items-center justify-between">
-                <img src="https://www.svgrepo.com/show/13666/heart.svg" width="25" class="spotLikeLogo mr-2">
-                <span>Select playlists to base recs on</span>
-                <!-- <i class="pi pi-info-circle h-fit w-fit my-auto p-2" pTooltip="For better recommendations, which works based on liked tracks" style="font-size: 1.1rem;" tooltipPosition="right" tooltip></i> -->
+        <p-splitButton 
+        id="referenceButton" 
+        [model]="playlistButtonItems"  
+        *ngIf="!loadingPlaylists" 
+        (onClick)="OpenUserPlaylists(2)" 
+        severity="success" 
+        class="w-full"
+        [ngStyle]="{ '--dynamic-dropdownWidth': buttonWidth + 'px' }"
+    >
+        <ng-template pTemplate="content">
+            <div class="h-fit py-3 mb-5 min-w-fit w-full mr-auto my-auto justify-center font-bold flex flex-row align-items-center justify-evenly">
+                <img src="https://www.svgrepo.com/show/13666/heart.svg" width="20" class="spotLikeLogo">
+                <span>Browse Your Playlists</span>
             </div>
-        </p-button>
+        </ng-template>
+    </p-splitButton>
         <div class="flex flex-row pb-20" *ngIf="authService.personal">
             <p-button *ngIf="!loadingPlaylists" (click)="PrepPlaylists()" size="small" pButton pRipple class="p-button-success h-fit py-2 w-full my-auto justify-center font-bold">
                 <div class="flex flex-row align-items-center justify-between">
@@ -238,7 +248,7 @@
         </small>
         <div class="flex-auto mt-6 min-w-fit w-full">
             <label class="block font-bold mb-2 w-fit ml-3 mr-auto" for="locale-user">
-                Number of tracks to generate
+                Number of new recommendations
             </label>
                 <div class="flex flex-row w-full">
                     <p-button size="small" (click)="decrement()" icon="pi pi-minus" [rounded]="true" />
@@ -250,23 +260,33 @@
                     <p-button size="small" (click)="increment()" icon="pi pi-plus" [rounded]="true" width="10" />
                 </div>
         </div> 
-        <div *ngIf="playlistsSelectedGenerated" class="max-w-sm min-w-fit w-full mb-2 mt-5 h-fit max-h-16 overflow-y-auto px-2 border-2 border-gray-400 border-solid rounded-lg flex flex-row flex-wrap">
-            <div *ngFor="let playlist of seedPlaylistsGenerated" class="w-1/2 h-full my-auto px-1"><p-chip [label]="getPlaylistName(playlist).substring(0, 10)" [image]="getPlaylistImg(playlist)" [alt]="getPlaylistName(playlist).substring(0, 10)" [removable]="true" (onRemove)="removePlaylistGenerated(playlist)"></p-chip></div>
+        <div *ngIf="playlistsSelectedGenerated" class="max-w-sm min-w-fit w-full mb-2 mt-5 h-fit flex flex-column">
+            <div class="w-fit mr-auto mb-2 ml-2 text-sm">Based On: </div>
+            <div  class="h-fit max-h-16 overflow-y-auto w-full border-2 border-gray-400 border-solid rounded-lg flex flex-row flex-wrap px-2 ">
+                <div *ngFor="let playlist of seedPlaylistsGenerated" class="{{seedPlaylistsGenerated.length>1 ? 'w-1/2' : 'w-full'}} h-full my-auto px-1"><p-chip [label]="getPlaylistName(playlist).substring(0, 10)" [image]="getPlaylistImg(playlist)" [alt]="getPlaylistName(playlist).substring(0, 10)" [removable]="true" (onRemove)="removePlaylistGenerated(playlist)"></p-chip></div>
+            </div>
         </div>
+
         <div class="flex flex-row mt-3 min-w-fit w-full justify-content-start">
-            <p-button *ngIf="!generating" (click)="GenerateTracks(playlistId)" pButton pRipple class="p-button-success h-fit py-2 w-full mt-auto mb-auto justify-center track-generator text-sm">
-                <div class="flex flex-row align-items-center justify-start w-full">
-                    <img src="https://www.svgrepo.com/show/528479/playlist-minimalistic-2.svg" width="30" class="spotPlaylistLogo">
-                    <span class="p-button-label ng-star-inserted" data-pc-section="label">{{ !playlistsSelectedGenerated ? 'Generate based on all saved tracks' : 'Generate based on selected playlists'}}<div></div></span>
-                </div>
-            </p-button>
+            <button
+            *ngIf="!generating" 
+            (click)="GenerateTracks(playlistId)" 
+            severity="success"
+            pButton 
+            class="w-full p-button- p-button-success p-button-lg mt-5 py-2 px-2"
+        >
+        <div class="h-fit py-2 mb-5 min-w-fit w-full mr-auto my-auto justify-center font-bold flex flex-row align-items-center justify-evenly">
+            <img width="25" src="https://www.svgrepo.com/show/523627/playlist.svg" alt="playlistlogo" class="spotLikeLogo">
+            <span>New Recommendations</span>
+        </div>
+        </button>
             <!-- <p *ngIf="!generating" class="mt-auto mb-auto mx-2">or</p>
             <div *ngIf="!generating" class="mt-auto mb-auto"><p-button icon="pi pi-list" [rounded]="true" [text]="true" [raised]="true" (click)="OpenUserPlaylists(1)" bottom pTooltip="{{!playlistsSelectedGenerated ? 'Select specific playlists to base recommendations on' : 'Update Selection'}}"></p-button></div>   -->
         </div>  
 
-        <div class="flex flex-row justify-content-space-between min-w-fit w-full text-sm mt-3">
+        <!-- <div class="flex flex-row justify-content-space-between min-w-fit w-full text-sm mt-3">
             <p class="mx-auto">Daily Tokens Left: <span class="font-semibold text-base {{user_limit < 10 ? 'text-red-500' : user_limit < 25 ? 'text-yellow-500' : 'text-green-500'}}">{{user_limit}}</span></p>
-        </div>
+        </div> -->
         <div>
             <p-progressSpinner 
             *ngIf="generating"
@@ -286,7 +306,7 @@
 
 
 <p-dialog 
-    header="{{playlistDialogState==0 ? 'Select playlists to add to liked': playlistDialogState==1 ? 'Select playlists to base recommendations on' :  'Pick a playlist to store recommendations'}}"
+    header="{{playlistDialogState==0 ? 'Select playlists to add to liked': playlistDialogState==1 ? 'Select playlists to base recommendations on' :  'Your Public Playlists'}}"
     [modal]="true"
     [(visible)]="showPlaylistDialog" 
     [style]="{ width: '80vw' }" 
@@ -312,7 +332,6 @@
     [dismissableMask]="true"
     [baseZIndex]="10006"
     >
-    <app-screener #screener></app-screener>
 </p-dialog>
 <p-dialog 
     header="Create Playlist"
@@ -383,8 +402,9 @@
                 </button>
             </div>
         
+            
             <!-- Check Button -->
-            <i class="icon-container mx-2 text-lg pi pi-check-square cursor-pointer {{addedToSavedDict[ytComponent.currentTrack.track!.id] ? 'text-green-'+themeService.getShade(400) : 'text-gray-'+themeService.getShade(400)}}" pTooltip="{{addedToSavedDict[ytComponent.currentTrack.track!.id] ? 'Remove from Saved Tracks' : 'Add to Saved Tracks'}}" (click)="EditSaved([ytComponent.currentTrack])"></i>
+            <i class="icon-container mx-2 text-lg pi pi-check-square cursor-pointer {{ytComponent.currentTrack!.favourite ? 'text-green-'+themeService.getShade(400) : 'text-gray-'+themeService.getShade(400)}}" pTooltip="{{ytComponent.currentTrack!.favourite ? 'Remove from Favourites' : 'Add to Favourites'}}" (click)="EditSaved([ytComponent.currentTrack])"></i>
         
             <!-- Now Playing Text with Scrolling Effect -->
             <div class="scrolling-container mx-2">
@@ -403,10 +423,17 @@
 
         
             <!-- Spotify Button -->
-            <div pTooltip="Open in Spotify" class="icon-container ml-3 mr-auto">
-                <a href="https://open.spotify.com/track/{{ytComponent?.currentTrack?.track?.id ?? ''}}" target="_blank">
+            <div pTooltip="Open in Spotify" class="icon-container ml-3">
+                <a href="{{plDetailsComponent.playlist.url}}" target="_blank">
                     <button pButton pRipple class="p-button-rounded p-button-text">
                         <img src="https://www.svgrepo.com/show/512899/spotify-162.svg" width="30" class="spotLikeLogo">
+                    </button>
+                </a>
+            </div>
+            <div pTooltip="Open in Youtube" class="icon-container ml-3 mr-auto">
+                <a [href]="ytComponent.youtubeUrl" target="_blank">
+                    <button pButton pRipple class="p-button-rounded p-button-text">
+                        <img src="https://www.svgrepo.com/show/513089/youtube-168.svg" width="30" class="spotLikeLogo">
                     </button>
                 </a>
             </div>
@@ -421,4 +448,4 @@
 <p-confirmDialog />
 
 
-<p-toast [life]="5000" [position]="toastPosition()" [breakpoints]="{ '575px': { width: '100%'} }"/>    
+<p-toast [life]="2000" [position]="toastPosition()" [breakpoints]="{ '575px': { width: '100%'} }"/>    

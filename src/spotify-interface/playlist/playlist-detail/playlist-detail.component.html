@@ -21,9 +21,9 @@
             <div>
                 <input [(ngModel)]="filterValue" type="text" pInputText class="h-full p-2 ml-0 md:ml-5 border-round border-1 border-gray-400"  placeholder="Search"/>
             </div>
-            <div *ngIf="hasSelected" class="mb-auto mt-auto ml-auto mr-5">
+            <!-- <div *ngIf="hasSelected" class="mb-auto mt-auto ml-auto mr-5">
                 <p-button icon="pi pi-check-square" class="text-gray-{{themeService.getShade(300)}}" [rounded]="true" [text]="true" pTooltip="Add/Remove Selected from Saved" (click)="EditSaved(selectedTracks)" />
-            </div>
+            </div> -->
             <div class="mb-auto mt-auto md:ml-auto mr-5 flex flex-row items-center">
                 <p-progressSpinner *ngIf="preLoadingYoutube" styleClass="w-[40px] h-[40px]" strokeWidth="5"></p-progressSpinner>
                 <div *ngIf="!preLoadingYoutube" pTooltip="Preload youtube URLs" class="mx-2">
@@ -83,39 +83,53 @@
             <div>
                 <input [(ngModel)]="filterValue" type="text" pInputText class="h-fit p-2 ml-0 md:ml-5 border-round border-1 border-gray-400"  placeholder="Search"/>
             </div>
-            <div *ngIf="hasSelected" class="mb-auto mt-auto ml-2">
+            <!-- <div *ngIf="hasSelected" class="mb-auto mt-auto ml-2">
                 <p-button icon="pi pi-check-square" class="text-gray-{{themeService.getShade(300)}}" [rounded]="true" [text]="true" pTooltip="Add/Remove Selected from Saved" (click)="EditSaved(selectedTracks)" />
-            </div>
+            </div> -->
 
         </div>
     </ng-template>
     <ng-template pTemplate="list" let-tracks>
         <div #trackList class="grid grid-nogutter">
-            <div class="col-12" *ngFor="let item of tracks; let first = first" (click)="selected[item.track.id] = !selected[item.track.id]; setLastSelected(item)" class="col-12 dataview-playlist-row {{ selected[item.track.id] ? 'dataview-playlist-row-selected':''}}">
+            <div class="col-12" *ngFor="let item of tracks; let first = first" (click)="selected[item.id] = !selected[item.id]; setLastSelected(item)" class="col-12 dataview-playlist-row {{ selected[item.id] ? 'dataview-playlist-row-selected':''}}">
                 <div class="flex flex-column sm:flex-row sm:align-items-center p-4 gap-3" [ngClass]="{ 'border-top-1 surface-border': !first }">
 
                     <div class="w-fit mr-auto md:mr-0">        
-                        <a href="{{item.GetAlbumUrl()}}" target="_blank" class="h-fit w-fit">
-                            <img pTooltip="Open Album" class="block xl:block border-round hover:shadow-lg hover:cursor-pointer hover:shadow-gray-700" [src]="item.GetImage()" [width]="100"/>
+                        <a href="{{item.album_url}}" target="_blank" class="h-fit w-fit">
+                            <img pTooltip="Open Album" class="block xl:block border-round hover:shadow-lg hover:cursor-pointer hover:shadow-gray-700" [src]="item.album_image" [width]="100"/>
                         </a>
                     </div>
                     <div class="flex flex-1 flex-column md:flex-row justify-content-between md:align-items-center">
                         <div class="flex" style="flex-direction: column">
                             <div class="h-fit">
                                     <div pTooltip="Open Track" class="font-bold text-lg mt-2 h-fit underline cursor-pointer hover-clickable-text " (click)="onPlay(item)">
-                                        {{ item.track.name }}
+                                        {{ item['track_name'] }}
                                     </div>
                             </div>
-                            <div class="text-600 h-fit">By: {{ item.track.artists[0].name }}</div>
+                            <div class="text-600 h-fit">By: {{ item['artist_name'] }}</div>
                             <div class="text-sm font-bold  h-fit {{themeService.getPopularityColor(item)}}">
                                 {{ themeService.getPopularityText(item) }}
                             </div>
                             <!-- <div class="text-600 h-fit">By: {{ item.owner.display_name }}</div> -->
                         </div>    
                     </div>
-                    <div class="w-fit ml-0 md:ml-auto mr-5">
-                        <i class="pi pi-check-square text-lg font-bold h-fit w-fit cursor-pointer {{addedToSavedDict[item.track.id] ? 'text-green-'+themeService.getShade(400) : 'text-gray-'+themeService.getShade(300)}}" pTooltip="{{addedToSavedDict[item.track.id] ? 'Remove from Saved Tracks' : 'Add to Saved Tracks'}}" (click)="EditSaved([item])"></i>
+                    <div class="w-fit ml-0 md:ml-auto mr-5 h-fit flex flex-row items-center gap-5">
+                        <audio [volume]="0.2" *ngIf="playingTrackId == item.id" class="h-fit w-fit" (ended)="previewTrack(item)" autoplay [src]="audioUrl"></audio>
+                        <div (click)="previewTrack(item)" *ngIf="playingTrackId == item.id" class="spinner-container cursor-pointer">
+                            <p-progressSpinner 
+                              styleClass="spinner h-2rem w-2rem" 
+                              strokeWidth="5" 
+                              fill="var(--purple-text-color)"
+                              animationDuration="4s">
+                            </p-progressSpinner>
+                            <i class="pause-icon pi pi-pause"></i> <!-- Font Awesome or PrimeIcons pause icon -->
+                        </div>
+                        <i *ngIf="playingTrackId != item.id" class="pi pi-play-circle text-3xl font-bold h-fit w-fit cursor-pointer" pTooltip="Preview" (click)="previewTrack(item)"></i>
+                        <div class="w-fit ml-0 md:ml-auto mr-5">
+                            <i class="pi pi-check-square text-xl font-bold h-fit w-fit cursor-pointer {{item.favourite ? 'text-green-'+themeService.getShade(400) : 'text-gray-'+themeService.getShade(300)}}" pTooltip="{{item.favourite ? 'Remove from Favourites' : 'Add to Favourites'}}" (click)="EditSaved([item])"></i>
+                        </div>
                     </div>
+
                 </div>
             </div>
         </div>

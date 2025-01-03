@@ -53,6 +53,7 @@
     #dockContainer
     id="trackDock"
     (scroll)="onDockScroll()"
+    (wheel)="onWheelScroll($event)"
     class="floating-dock flex fixed bottom-0 left-0 right-0 gap-2 px-4 py-2 mx-auto overflow-x-auto "
     [style.max-width]="thumbBarMaxWidth + 'px'">
     <div class="flex w-full relative">
@@ -61,29 +62,27 @@
                 <i class="shadow-md pi {{curTrackForward?'pi-fast-forward':'pi-fast-backward'}} text-3xl" ></i>
             </button>
         </div>
-        
-
         <!-- Track items -->
         <div *ngFor="let item of tracks" (click)="onNewTrack(item)" class="relative ml-3">
             <!-- Centered Icon Overlay -->
             <i
-                *ngIf="selectedDict[item.track?.id!]"
+                *ngIf="selectedDict[item.id!]"
                 class="pi pi-play text-4xl text-purple-{{ themeService.getShade(300) }} opacity-75"
                 style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
             ></i>
         
             <!-- Track Image -->
             <img
-                id="{{ item.track?.id! }}"
+                id="{{ item?.id! }}"
                 class="{{
-                    selectedDict[item.track?.id!]
+                    selectedDict[item?.id!]
                         ? 'border-3 shadow-lg shadow-purple-300 border-solid border-purple-' +
                           themeService.getShade(300)
                         : ''
                 }}"
-                pTooltip="{{ item.GetArtist() }} - {{ item.GetTitle() }}"
-                [src]="item.GetImage()"
-                [alt]="item.GetTitle()"
+                pTooltip="{{ item['artist_name']}} - {{ item['track_name'] }}"
+                [src]="item['album_image']"
+                [alt]="item['track_name']"
                 [style.width]="thumbNailWidth + 'px'"
                 [style.max-width]="thumbNailWidth + 'px'"
             />

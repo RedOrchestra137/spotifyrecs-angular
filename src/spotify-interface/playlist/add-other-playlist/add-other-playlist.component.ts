@@ -1,9 +1,9 @@
-import { Component, EventEmitter, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Output, ViewChild } from '@angular/core';
 import { ImportsModule } from '../../../app/imports';
 import { Playlist, PlaylistDetail, Track } from '../../../interfaces/spotify';
 import { DropdownFilterEvent } from 'primeng/dropdown';
 import { Routes } from '../../../../routes';
-import { SpotifyAuthService } from '../../auth/spotify-auth.service';
+import { SpotifyAuthService } from '../../../services/spotify-auth.service';
 import { HttpClient } from '@angular/common/http';
 import { MessageService } from 'primeng/api';
 import { PlaylistComponent } from '../playlist.component';
@@ -18,6 +18,7 @@ import { PlaylistComponent } from '../playlist.component';
 })
 export class AddOtherPlaylistComponent {
   @Output() addedOtherPlaylists:EventEmitter<Playlist[]> = new EventEmitter<Playlist[]>();
+  @ViewChild('newPlaylistDropdown') newPlaylistDropDown:ElementRef|undefined
   plComponent: PlaylistComponent|undefined;
 
   searchedPlaylists: Playlist[] = [];
@@ -26,29 +27,58 @@ export class AddOtherPlaylistComponent {
   newPlaylists:Playlist[] = []
   newPLById = false
   loadingPlaylistById = false
+  overlayWidth = 0
+  typing = false
+  typingIndex = 0
+  lastsearched = ""
+  filterValue = ""
+
+  async triggerTyping() {
+    while (true){
+      if(this.typingIndex==5){
+        break
+      }
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      this.typingIndex++
+    }
+    this.typingIndex = 0
+    if(this.filterValue && this.filterValue.length > 0 && this.filterValue!=this.lastsearched){
+      console.log("searching fort ", this.filterValue)
+      this.lastsearched = this.filterValue
+      await this._http.get<any>(Routes.Spotify.SearchPlaylists, {params:{
+        'q':this.filterValue
+      }}).subscribe((pL)=>{
+        console.log("found ", pL)
+        if(pL?.playlists){
+          this.searchedPlaylists = pL?.playlists?.items.filter((p:any) => {return p?.id})
+        }
+      }, (err)=>{console.log(err)})
+    }
+    return 
+  }
 
   public constructor(private _http: HttpClient,private authService:SpotifyAuthService, private messageService: MessageService) {
 
   }
   ngOnInit(plComponent: PlaylistComponent): void {
-    this.plComponent = plComponent
+    if(plComponent){
+      this.plComponent = plComponent
+    }
     console.log('plComponent: ', this.plComponent)
+    this.loopTyping()
+    this.overlayWidth = this.newPlaylistDropDown?.nativeElement.offsetWidth
+  }
+
+  async loopTyping(){
+    while(true){
+      await this.triggerTyping()
+    }
   }
   onSelectionChange(event: any) {
     this.addPlaylist()
   }
   removeFromNewPlaylists(id:string){
     this.newPlaylists = this.newPlaylists.filter(playlist => playlist.id !== id)
-  }
-  async searchPlaylists(event: DropdownFilterEvent){
-    const query = event.filter; // Get the filter value
-    this._http.get<any>(Routes.Spotify.SearchPlaylists,{params: {'q': query}}).subscribe((playlists: any) => {
-      this.searchedPlaylists = playlists["playlists"].items.filter((playlist: Playlist) => playlist.owner.id !== this.authService.user_id); // Update the array
-      
-    }, error => {
-      console.error('Error fetching playlists:', error);        
-      this.searchedPlaylists = []; // Fallback to empty array on error
-    });
   }
   onNewPLIDChange(event: string){
     this.newPlaylistID = event

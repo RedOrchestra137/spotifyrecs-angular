@@ -1,5 +1,5 @@
 import { Injectable, Renderer2, RendererFactory2 } from '@angular/core';
-import { Playlist, Track } from '../interfaces/spotify';
+import { Playlist, SavedTrack, Track } from '../interfaces/spotify';
 
 @Injectable({
   providedIn: 'root', // or specify it in the providers array of your module
@@ -34,26 +34,26 @@ export class ThemeService {
       console.error('Theme link element not found!');
     }
   }
-  getPopularityText(item: Track): string{
-    if(!item.track){return ''}
-    let popularity = item.track.popularity == 0 ? 'Popularity not available'
-    : item.track.popularity == 0 && item.track.available_markets.length>0 || item.track.popularity < 5 ? 'Ultra Arcane' 
-    : item.track.popularity < 10 ? 'Arcane' 
-    : item.track.popularity < 20 ? 'Obscure' : item.track.popularity < 30 ? 'Pretty Obscure' 
-    : item.track.popularity < 40 ? 'Slightly Obscure' : item.track.popularity < 50 ? 'Pretty Normal'
-    : item.track.popularity < 60 ? 'Normal' : item.track.popularity < 70 ? 'Quite Popular'
-    : item.track.popularity < 75 ? 'Popular' : item.track.popularity < 90 ? 'Very Popular' : 'Quintessential Normie'
+  getPopularityText(item: SavedTrack): string{
+    if(!item){return ''}
+    let popularity = item.popularity == 0 ? 'Popularity not available'
+    : item.popularity == 0 && item.available_markets>0 || item.popularity < 5 ? 'Ultra Arcane' 
+    : item.popularity < 10 ? 'Arcane' 
+    : item.popularity < 20 ? 'Obscure' : item.popularity < 30 ? 'Pretty Obscure' 
+    : item.popularity < 40 ? 'Slightly Obscure' : item.popularity < 50 ? 'Pretty Normal'
+    : item.popularity < 60 ? 'Normal' : item.popularity < 70 ? 'Quite Popular'
+    : item.popularity < 75 ? 'Popular' : item.popularity < 90 ? 'Very Popular' : 'Quintessential Normie'
     return popularity
   }
-  getPopularityColor(item: Track): string{
-    if(!item.track){return ''}
-    let colour = item.track.popularity == 0 ? 'text-grey-'+this.getShade(200) : item.track.popularity < 5 ? 
-    'text-purple-'+this.getShade(600) : item.track.popularity < 10 ? 
-    'text-purple-'+this.getShade(500) : item.track.popularity < 20 
-    ? 'text-purple-'+this.getShade(300) : item.track.popularity < 30 ?
-    'text-purple-'+this.getShade(100) :  item.track.popularity < 50 ?
-    'text-blue-'+this.getShade(600) : item.track.popularity < 75 ?
-    'text-blue-'+this.getShade(400) : item.track.popularity < 90 ? 
+  getPopularityColor(item: SavedTrack): string{
+    if(!item){return ''}
+    let colour = item.popularity == 0 ? 'text-grey-'+this.getShade(200) : item.popularity < 5 ? 
+    'text-purple-'+this.getShade(600) : item.popularity < 10 ? 
+    'text-purple-'+this.getShade(500) : item.popularity < 20 
+    ? 'text-purple-'+this.getShade(300) : item.popularity < 30 ?
+    'text-purple-'+this.getShade(100) :  item.popularity < 50 ?
+    'text-blue-'+this.getShade(600) : item.popularity < 75 ?
+    'text-blue-'+this.getShade(400) : item.popularity < 90 ? 
     'text-blue-'+this.getShade(200): 'text-blue-'+this.getShade(100)
     return colour
   }

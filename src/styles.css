@@ -70,7 +70,9 @@ app-spotify-interface{
 .spotPlaylistLogo{
     filter: var(--spotify-playlist-logo);
 }
-
+:host #trackDock:hover::-webkit-scrollbar {
+    height: 12px; /* Thicker scrollbar */
+}
 .p-button.p-button-success {
     background-color: var(--spotify-green) !important; /* PrimeNG's green or your desired color */
     border-color: var(--spotify-green) !important;
@@ -184,4 +186,41 @@ p-chip.p-element{
 }
 .addOtherPlaylists-dropdown>.p-dropdown{
   width: 100%;
+}
+.p-menubar-end{
+    margin-left:0;
+    flex:1;
+}
+.generateDropdownOption{
+    display: block;
+    width: var(--dynamic-dropdownWidth, 200px); /* Fallback width */
+    text-align: left;
+
+}
+.p-tieredmenu-root-list{
+    width:fit-content;
+}
+.p-tieredmenusub{
+    width:fit-content;
+}
+.p-tieredmenu{
+    width:fit-content;
+    z-index:10;
+}
+.spinner-container {
+    position: relative;
+    width: 2rem;
+    height: 2rem;
+  }
+  
+.p-splitbutton{
+width:100%;
+}
+.pause-icon {
+position: absolute;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+font-size: 1rem; /* Adjust size as needed */
+color: var(--text-color); /* Choose an appropriate color */
 }

@@ -1,12 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { AfterViewInit, Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, Pipe, PipeTransform, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { SpotifyAuthService } from '../../auth/spotify-auth.service';
+import { SpotifyAuthService } from '../../../services/spotify-auth.service';
 import { Routes } from '../../../../routes';
 import { ImportsModule } from '../../../app/imports';
-import { Dictionary, PlaylistDetail, Track, TrackView } from '../../../interfaces/spotify';
+import { Dictionary, PlaylistDetail, PublicPlaylist, SavedTrack, Track, TrackView } from '../../../interfaces/spotify';
 import { firstValueFrom } from 'rxjs';
-import { DomSanitizer } from '@angular/platform-browser';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { SafePipe } from '../../../app/pipe';
 import { MessageService } from 'primeng/api';
 import { ThemeService } from '../../../services/theme.service';
@@ -23,29 +23,29 @@ export interface startPlaylistModeEvent{
 
 export class PlaylistDetailComponent implements OnInit {
   @Input('playlistId') playlistId: string = '';
-  @Output('playingTrack') playingTrack = new EventEmitter<Track>();
+  @Output('playingTrack') playingTrack = new EventEmitter<SavedTrack>();
   @Output('startingPlaylistMode') startingPlaylistMode = new EventEmitter<startPlaylistModeEvent>();
   @ViewChild('trackList', { static: false }) trackList!: ElementRef;
-  playlist!: PlaylistDetail;
+  playlist!: PublicPlaylist;
   
-  ogTracks: Array<Track> = [];
-  shuffledTracks: Array<Track> = [];
+  ogTracks: Array<SavedTrack> = [];
+  shuffledTracks: Array<SavedTrack> = [];
   _loading: boolean = false;
-  filterTracks: Array<Track> = [];
+  filterTracks: Array<SavedTrack> = [];
   sortOrder: number = -1;
-  sortField: any = 'track.popularity';
-  sortKey: any = 'track.popularity';
+  sortField: any = 'popularity';
+  sortKey: any = 'popularity';
   ascendingSort: boolean = false;
   shuffled: boolean = false;
+  playingTrackId: string = '';
   preLoadingYoutube: boolean = false;
   sortOptions: any[] = [
-    { label: 'Name', value: 'track.name' },
-    { label: 'Popularity', value: 'track.popularity' }
+    { label: 'Name', value: 'name' },
+    { label: 'Popularity', value: 'popularity' }
   ]
   lastSelected:number = -1
-  addedToSavedDict: Dictionary<boolean> = {};
   selected:Dictionary<boolean> = {};
-  
+  audioUrl:string = "";
   private isShiftPressed = false;
   youtubeEquivalent:string = "";
 
@@ -68,15 +68,15 @@ export class PlaylistDetailComponent implements OnInit {
 
   }
 
-  public get tracks(): Array<Track>{
+  public get tracks(): Array<SavedTrack>{
     let sort:string[] = (this.sortField as string).split('.')
 
     if(this.shuffled){
       return this.shuffledTracks
-      .filter(track => track?.track?.name.toLowerCase().includes(this.filterValue.toLowerCase()))
+      .filter(track => track?.['track_name'].toLowerCase().includes(this.filterValue.toLowerCase()))
     }
     return this.ogTracks
-    .filter(track => track?.track?.name.toLowerCase().includes(this.filterValue.toLowerCase()))
+    .filter(track => track?.['track_name'].toLowerCase().includes(this.filterValue.toLowerCase()))
     .sort(
       (a,b)=>{
         let aVal:any = a
@@ -103,8 +103,8 @@ export class PlaylistDetailComponent implements OnInit {
       }
     )
   }
-  public set tracks(value: Array<Track>){
-    this.ogTracks = value.map(x => Track.FromObject(x))
+  public set tracks(value: Array<SavedTrack>){
+    this.ogTracks = value
   }
   public get onMobile(): boolean{
     
@@ -113,8 +113,8 @@ export class PlaylistDetailComponent implements OnInit {
   public get hasSelected(): boolean{
     return Object.values(this.selected).filter(x => x==true).length > 0
   }
-  public get selectedTracks(): Array<Track>{
-    return this.tracks.filter(x => x.track && this.selected[x.track.id])
+  public get selectedTracks(): Array<SavedTrack>{
+    return this.tracks.filter(x => x && this.selected[x.id])
   }
   @HostListener('document:click', ['$event'])
   onClick(event: Event) {
@@ -123,10 +123,30 @@ export class PlaylistDetailComponent implements OnInit {
       this.deselectAll();
     }
   }
+  previewTrack(track: SavedTrack) {
+    if(!track){return}
+    if(this.playingTrackId != track.id){
+      this.playingTrackId = track.id!;
+      this.getYoutubePreview(track);    }
+    else{
+      this.playingTrackId = '';
+    }
+  }
+  getYoutubePreview(track: SavedTrack){
+    if(!track){return}
+    if(track.preview_url){
+      this.audioUrl = track.preview_url
+    return}
+    if(this.audioUrl.length>0){return}
+    let artistName = track['track_name']
+    let trackName = track['track_name']
+    let trackLength = Math.round(track['track_length']/1000); 
+    this.audioUrl = Routes.Spotify.GetYoutubeMp3(encodeURIComponent(artistName),encodeURIComponent(trackName),encodeURIComponent(trackLength.toString()));
+  }
   deselectAll(){
     for(let track of this.tracks){
-      if(!track.track){continue}
-      this.selected[track.track.id] = false
+      if(!track){continue}
+      this.selected[track.id] = false
     }
   }
   async transferToYoutube(){
@@ -135,9 +155,9 @@ export class PlaylistDetailComponent implements OnInit {
     let savedTracks = this._spotifyAuth.savedTracks
     let savedIds = savedTracks.map(x => x.id)
     for(let track of this.tracks){
-      if(!track.track){continue}
-      if(savedIds.includes(track.track.id)){
-        let savedTrack = savedTracks.find(x => x.id == track.track!.id)
+      if(!track){continue}
+      if(savedIds.includes(track.id)){
+        let savedTrack = savedTracks.find(x => x.id == track!.id)
         if(!savedTrack||savedTrack.youtube_url||savedTrack.youtube_url?.length>0){continue}
         tracksToPreload.push(track)
       }
@@ -147,22 +167,15 @@ export class PlaylistDetailComponent implements OnInit {
       this.messageService.add({severity:'warning', summary: 'Not found', detail: 'No tracks to preload'});
       return
     }
-    this._customClient.post<string[]>(Routes.Spotify.TransferToYoutube,{
+    await firstValueFrom( this._customClient.post<string[]>(Routes.Spotify.TransferToYoutube,{
       tracks: tracksToPreload
-    }).subscribe(r=>{
+    })).then((r)=>{
       let ytUrls:string[] = r
       let i = 0
       for(let track of tracksToPreload){
-        let tr:TrackView = {
-          youtube_url: ytUrls[i]??"",
-          id: track.track?.id??"",
-          artist_ids: track.track?.artists?.map(a => a.id)??[],
-          album_id: track.track?.album?.id??"",
-          added_at: track.added_at??""
-        }
-        tr['youtube_url'] = ytUrls[i]
-        let index = savedIds.indexOf(tr.id)
-        savedTracks.splice(index,1,tr)
+        track['youtube_url'] = ytUrls[i]
+        let index = savedIds.indexOf(track.id)
+        savedTracks.splice(index,1,track)
         this.preLoadingYoutube = false
         i++
       }
@@ -174,21 +187,21 @@ export class PlaylistDetailComponent implements OnInit {
       this.messageService.add({severity:'error', summary: 'Failed', detail: 'Failed to preload youtube URLs'});
     })
   }
-  setLastSelected(track: Track){
-    let index = this.tracks.findIndex(x => x.track?.id === track.track?.id)
+  setLastSelected(track: SavedTrack){
+    let index = this.tracks.findIndex(x => x.id === track?.id)
     if(this.isShiftPressed){
       if(this.lastSelected>-1 && index > this.lastSelected){
         for(let i = this.lastSelected; i < index; i++){
-          if(this.tracks[i].track?.id){
-            let id = this.tracks[i].track?.id!
+          if(this.tracks[i]?.id){
+            let id = this.tracks[i]?.id!
             this.selected[id] = true
           }
         }
       }
       else if(this.lastSelected>-1 && index < this.lastSelected){
         for(let i = this.lastSelected; i >= index; i--){
-          if(this.tracks[i].track?.id){
-            let id = this.tracks[i].track?.id!
+          if(this.tracks[i]?.id){
+            let id = this.tracks[i]?.id!
             this.selected[id] = true
           }
         }
@@ -217,21 +230,21 @@ export class PlaylistDetailComponent implements OnInit {
     this.ogTracks = [];
     if (this.playlistId !== '') {
       this._customClient
-        .get<PlaylistDetail>(Routes.Spotify.GetPlaylist(this.playlistId))
-        .subscribe((response) => {
-          this.playlist = response;
-          this.tracks = response.tracks.items;
+        .get<PlaylistDetail|PublicPlaylist>(Routes.Spotify.GetPlaylist(this.playlistId))
+        .subscribe(async(response) => {
+          if((response as PublicPlaylist).last_refreshed > 0||(response as any).generated){
+            this.playlist = response as PublicPlaylist
+            this.tracks = this.playlist.tracks;
+          }
           this.tracks.forEach(track => {
-            if (track.track) {
-              this.addedToSavedDict[track.track.id] = this.isSaved(track);
-              this.selected[track.track.id] = false
+            if (track) {
+              this.selected[track.id] = false
             }
           })
           this._loading = false;
         });
     }
   }
-
   onSortChange(event: any){
     let value = event.value;
     this.shuffled = false
@@ -247,44 +260,33 @@ export class PlaylistDetailComponent implements OnInit {
       this.sortOrder = -1
     }
   }
-
-  isSaved(track: Track): boolean {
-    
-    return this._spotifyAuth.savedTracks.some(savedTrack => savedTrack.id === track.track?.id)
-  }
-  EditSaved(tracks: Track[]) {
-    let toRemove: Track[] = []
-    let toAdd: Track[] = []
+  EditSaved(tracks: SavedTrack[]) {
+    let toRemove: SavedTrack[] = []
+    let toAdd: SavedTrack[] = []
     tracks.forEach(track => {
-
-      if (this.isSaved(track)) {
+      if (track.favourite) {
         toRemove.push(track)
+        track.favourite = false
+        this.messageService.add({ severity: 'error', summary: 'Track Removed From Favourites', detail: track['artist_name']+ ' - ' + track['track_name']});
       } else {
         toAdd.push(track)
+        track.favourite = true
+        this.messageService.add({ severity: 'success', summary: 'Track Added To Favourites', detail: track['artist_name']+ ' - ' + track['track_name']});
       }
     })
     this._spotifyAuth.removeFromSaved(toRemove)
     this._spotifyAuth.addToSaved(toAdd)
-    toRemove.forEach(track => {
-      if(!track.track){return}
-      this.addedToSavedDict[track.track.id] = false
-      this.messageService.add({ severity: 'error', summary: 'Track Removed From Saved', detail: track.track.artists[0].name + ' - ' + track.track.name });
-    })
-    toAdd.forEach(track => {
-      if(!track.track){return}
-      this.addedToSavedDict[track.track.id] = true
-      this.messageService.add({ severity: 'success', summary: 'Track Added To Saved', detail: track.track.artists[0].name + ' - ' + track.track.name });
-    })
     if(toAdd.length == 0 && toRemove.length == 0){
       this.messageService.add({ severity: 'info', summary: 'No effect', detail: 'No changes' });
     }
     
   }
   shuffle(){
-    this.shuffledTracks = Array.from(this.ogTracks.map(x => Track.FromObject(x))).sort(() => Math.random() - 0.5);
+    this.shuffledTracks = Array.from(this.ogTracks.sort(() => Math.random() - 0.5));
     this.shuffled = !this.shuffled
   }
-  onPlay(track: Track) {
+  onPlay(track: SavedTrack) {
+    this.playingTrackId = "";
     this.playingTrack.emit(track);
   }
 }

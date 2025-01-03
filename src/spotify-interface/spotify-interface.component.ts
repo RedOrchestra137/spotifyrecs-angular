@@ -2,18 +2,17 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, OnChanges, OnDestro
 import { ImportsModule } from '../app/imports';
 import { HTTP_INTERCEPTORS, HttpClient, HttpClientModule } from '@angular/common/http';
 import { Routes } from '../../routes';
-import { SpotifyAuthService } from './auth/spotify-auth.service';
-import { AuthInterceptService } from './auth/auth-intercept.service';
+import { SpotifyAuthService } from '../services/spotify-auth.service';
+import { AuthInterceptService } from '../services/auth-intercept.service';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { DetailsOpenedEvent, PlaylistComponent } from './playlist/playlist.component';
 import { PlaylistDetailComponent, startPlaylistModeEvent } from './playlist/playlist-detail/playlist-detail.component';
-import { Playlist, PlaylistDetail, PublicPlaylist, Track } from '../interfaces/spotify';
+import { Playlist, PlaylistDetail, PublicPlaylist, SavedTrack, Track } from '../interfaces/spotify';
 import { SpotifyUser } from './response objects/UserResponse';
 import { GeneratedResponse } from './response objects/TokenResponse';
 import { ToastPositionType } from 'primeng/toast';
 import { KeyValue, NgStyle } from '@angular/common';
 import { firstValueFrom, forkJoin, Subscription } from 'rxjs';
-import { ScreenerComponent } from './screener/screener.component';
 import { YoutubeComponent } from './youtube/youtube.component';
 import { AddOtherPlaylistComponent } from './playlist/add-other-playlist/add-other-playlist.component';
 import { CreatePlaylistComponent } from './playlist/create-playlist/create-playlist.component';
@@ -24,6 +23,7 @@ import { ThemeService } from '../services/theme.service';
 import { InputOtpChangeEvent } from 'primeng/inputotp';
 import { v4 as uuidv4 } from 'uuid';
 import { OwnershipCheckComponent } from './ownership-check/ownership-check.component';
+import { Navigation, Router } from '@angular/router';
 
 export enum PlayListDialogState {
   SelectMultipleLiked,
@@ -34,7 +34,7 @@ export enum PlayListDialogState {
   selector: 'app-spotify-interface',
   standalone: true,
   imports: [ImportsModule,PlaylistComponent,PlaylistDetailComponent, HttpClientModule,
-    ScreenerComponent,YoutubeComponent,AddOtherPlaylistComponent, CreatePlaylistComponent,
+    YoutubeComponent,AddOtherPlaylistComponent, CreatePlaylistComponent,
     OwnershipCheckComponent
   ],
   templateUrl: './spotify-interface.component.html',
@@ -53,7 +53,6 @@ export enum PlayListDialogState {
 export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit  {
   @ViewChild(PlaylistComponent) plComponent!: PlaylistComponent;
   @ViewChild(PlaylistDetailComponent) plDetailsComponent!: PlaylistDetailComponent;
-  @ViewChild(ScreenerComponent) screener!: ScreenerComponent;
   @ViewChild(YoutubeComponent) ytComponent!: YoutubeComponent;
   @ViewChild(AddOtherPlaylistComponent) addOtherPlComponent!: AddOtherPlaylistComponent;
   @ViewChild(CreatePlaylistComponent) createPlComponent!: CreatePlaylistComponent;
@@ -61,6 +60,8 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
   @ViewChild(OwnershipCheckComponent) ownershipCheck!: OwnershipCheckComponent;
   @ViewChild('scrollingText', { static: false }) scrollingText!: ElementRef;
   @ViewChild('scrollTextContainer', { static: false }) scrollTextContainer!: ElementRef;
+  playlistCreatedEmitter: EventEmitter<Playlist> = new EventEmitter<Playlist>()
+  referenceButton: HTMLElement | null = null;
   showPlaylistDialog:boolean = false
   showPlaylistDetailDialog:boolean = false
   showScreenerDialog:boolean = false
@@ -78,7 +79,7 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
   playlistId:string = "";
   trackAmt:number = 25;
   playlistChip:any = { text: "", image: "" };
-  latestGeneratedPlaylist:Playlist|null = null
+  latestGeneratedPlaylist:PublicPlaylist|null = null
 
 
   loadingPlaylists:boolean = false
@@ -116,12 +117,33 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
 
   scrollAnimationFrameId: number | null = null; // Store the animation frame ID
   savedTracksSubscription:Subscription
+  generateOptions: MenuItem[]|undefined
+
+
+  playlistButtonItems:MenuItem[] = [
+    {
+        label: 'Select Playlists for recommendations',
+        command: () => {
+            this.OpenUserPlaylists(PlayListDialogState.SelectMultipleGenerated);
+        },
+        styleClass: 'generateDropdownOption'
+        
+    },
+    {
+      label: 'Get your recent favourites',
+      command: () => {
+          this.getRecentFavourites();
+      },
+      styleClass: 'generateDropdownOption'
+    }
+  ];
   constructor(
     public authService: SpotifyAuthService,
     private messageService: MessageService,
     private http:HttpClient,
     private cdr: ChangeDetectorRef,
-    public themeService: ThemeService
+    public themeService: ThemeService,
+    private Router:Router
   ) {
     this.sessionId = uuidv4()
     this.savedTracksSubscription = this.authService.savedTracksFinished.subscribe((value) => {
@@ -132,8 +154,74 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
         this.messageService.add({severity:'error', summary: 'Error', detail: 'Failed to load saved tracks'});
       }
     })
+
    }
+
+   MoodBasedGeneration(){
+
+   }
+   GenreBasedGeneration(){
+     
+   }
+   toTestComponent(){
+     this.Router.navigate(['test'])
+   }
+   async RecentFavouritesBasedGeneration(){
+    console.log("Recent Favourites Based Generation")
+    if(this.authService.newlySavedTracks){
+      let name = this.authService.authenticatedUser?.display_name??''
+      this.createPlComponent.playlistName = `Recommendations for ${name}. ${new Date(Date.now()).toLocaleDateString()}`
+      this.createPlComponent.playlistDescription = 'Based on recent favourites'
+      this.createPlComponent.create()
+      await firstValueFrom(this.playlistCreatedEmitter).then((pl:Playlist)=>{
+
+      })
+    }
+    else{
+      this.messageService.add({severity:'error', summary: 'Error', detail: 'Failed to load recent favourites'});
+    }
+   }
+
+testMusicBrainz(ids:string[]){
+  this.http.post<any>(Routes.Spotify.GetRecordingFromSpotify, {"spotify-ids":ids}).subscribe((data)=>{
+    console.log(data)
+  })
+}
+public get buttonWidth(): number {
+    this.referenceButton = document.getElementById('referenceButton');
+    if (this.isAuthenticated && this.referenceButton) {
+        return this.referenceButton?.offsetWidth ?? 0;
+    }
+    return 0;
+}
   ngAfterViewInit(): void {
+  //  this.generateOptions = [
+        
+  //     {
+  //         label: 'Generate Based on Mood',
+  //         command: () => {
+  //             this.MoodBasedGeneration()
+  //         },
+  //         styleClass: 'generateDropdownOption',
+  //     },
+      
+  //     {
+  //         label: 'Generate Based on Genre',
+  //         command: () => {
+  //             this.GenreBasedGeneration()
+  //         },
+  //         styleClass: 'generateDropdownOption',
+  //     },
+
+  //     {
+  //       label: 'Generate Based on Recent Favourites',
+  //       command: async () => {
+  //           console.log("test")
+  //           await this.RecentFavouritesBasedGeneration()
+  //       },
+  //       styleClass: 'generateDropdownOption',
+  //     }
+  // ];
   }
   startScrolling() {
     const textElement = this.scrollingText.nativeElement;
@@ -169,15 +257,15 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
 
 
 
-  public get user_limit(){
-    return this.authService.user_limit
-  }
+  // public get user_limit(){
+  //   return this.authService.user_limit
+  // }
   
   public get isAuthenticated(){
     return this.authService.authenticated
   }
   public get username(){
-    return this.authService.authenticatedUser?.display_name
+    return this.authService.authenticatedUser?.display_name??""
   }
   public get saveTracks(){
     if(this.authService.personal){
@@ -200,11 +288,6 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
     }
     return {}
   }
-  public get addedToSavedDict(){
-    this.ytComponent.currentTrack.track?.id
-    return this.plDetailsComponent.addedToSavedDict
-  }
-
 
   public get spotifyLogin():string{
     return this.authService.publicUsername
@@ -220,14 +303,14 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
   }
   public get latestGeneratedPlaylistUrl():string{
     if(this.latestGeneratedPlaylist){
-      return this.latestGeneratedPlaylist.GetUrl()
+      return this.latestGeneratedPlaylist.url
     }
     return ""
   }
 
   public get latestGeneratedPlaylistImage():string{
     if(this.latestGeneratedPlaylist){
-      return this.latestGeneratedPlaylist.GetImage()
+      return this.latestGeneratedPlaylist.image_url
     }
     return ""
   }
@@ -240,7 +323,7 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
   }
 
 
-  EditSaved(tracks: Track[]) {
+  EditSaved(tracks: SavedTrack[]) {
     this.plDetailsComponent.EditSaved(tracks)
   }
   async ngOnInit() {    
@@ -277,7 +360,7 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
   }
   onYoutubeClose() {
     this.authService.youtube = false
-    this.ytComponent.selectedDict[this.ytComponent.currentTrack.track?.id!] = false
+    this.ytComponent.selectedDict[this.ytComponent.currentTrack?.id!] = false
     this.ytComponent.scrollInitialized = false
     this.ytComponent.shuffled = false
   }
@@ -332,17 +415,11 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
       this.showPlaylistChip = false
     }
   }
-  ytTrackChange() {
-    console.log("ytTrackChange");
-    
+  ytTrackChange() {    
     const textWidth = this.scrollingText.nativeElement.clientWidth;
     const containerWidth = this.scrollTextContainer.nativeElement.clientWidth;
-    
-    console.log('Text Width:', textWidth, 'Container Width:', containerWidth);
-    
-    this.isScrollingText = textWidth > containerWidth; // Determine if scrolling is needed
-    console.log('isScrollingText:', this.isScrollingText);
-    
+        
+    this.isScrollingText = textWidth > containerWidth; // Determine if scrolling is needed    
     if (this.isScrollingText) {
       this.startScrolling();
     } else {
@@ -380,6 +457,7 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
       this.loggingIn = false
       this.registering = false
       this.changingPass = false
+      await this.getRecentFavourites(true)
     }
   }
   async Register(){
@@ -447,6 +525,17 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
 
   }
 
+  async getRecentFavourites(login:boolean=false){
+    await this.authService.getRecentFavourites(login).then((response:{success:boolean, playlist:PublicPlaylist|null})=>{
+      if(response.success && !login){
+        this.openDetails(response.playlist)
+      }
+      else if(!login){
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No recent favourites' });
+      }
+    })
+  }
+
   GenerateTracks(id:string){
     this.generating = true
     if(id==""&&this.authService.personal){
@@ -456,12 +545,15 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
     }
 
     let seed_tracks:any[] = []
+    console.time("Execution Time")
+    console.log("generating tracks based on")
 
     let obsArr = []
     for(let playlistID of this.seedPlaylistsGenerated){
-      obsArr.push(this.http.get<PlaylistDetail>(Routes.Spotify.GetPlaylist(playlistID)))
+      obsArr.push(this.http.get<PublicPlaylist>(Routes.Spotify.GetPlaylist(playlistID)))
     }
     if(obsArr.length == 0){
+      console.log('all library tracks')
       let body:any = { 
         "seed-tracks":JSON.stringify(this.authService.savedTracks),
         "pop-pref":this.authService.popularityPreference,
@@ -474,36 +566,33 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
         body["destination-id"] = id
       }
       else{
-        body["saved-tracks"] = JSON.stringify(this.authService.savedTracks)
         body["seed-playlists"]= JSON.stringify(obsArr)
       }
+      console.timeEnd("Execution Time")
       this.http.post<GeneratedResponse>(Routes.Spotify.GenerateTracks(this.trackAmt), body, {headers:!this.authService.personal?{"middle-man":"true"}:{}}).subscribe((response:GeneratedResponse)=>{
         this.generating = false;
         this.hasGenerated = true
-        this.latestGeneratedPlaylist = Playlist.FromObject(JSON.parse(response.your_playlist))
+        this.latestGeneratedPlaylist = JSON.parse(response.your_playlist)
 
-        this.http.post(Routes.Spotify.AddUserSavedPlaylist, {"playlist":Playlist.toPublic(this.latestGeneratedPlaylist)}).subscribe((response:any)=>{
+        this.http.post(Routes.Spotify.AddUserFavourites, {"playlist":this.latestGeneratedPlaylist}).subscribe((response:any)=>{
           this.openDetails(null,this.latestGeneratedPlaylist)
           this.showGenerated()
         },(error)=>{console.log(error);this.generating = false;this.showError(error.status+" - "+error.statusText+": "+error.error)})
 
-        this.authService.SetGenerationLimits(response.user_limit,response.app_limit)
+        // this.authService.SetGenerationLimits(response.user_limit,response.app_limit)
       },(error)=>{console.log(error);this.generating = false;this.showError(error.status+" - "+error.statusText+": "+error.error)})
       return
     }
+    console.log('seed tracks')
+
     forkJoin(
       obsArr
     ).subscribe(async (details)=>{
+
       let seed_playlists:any[] = []
       for(let detail of details){
         seed_playlists.push(detail)
-        for(let track of detail.tracks.items){
-          seed_tracks.push({
-            id: track?.track?.id,
-            added_at: track.added_at,
-            artist_ids: track?.track?.artists.map((artist)=>{return artist.id})
-          })
-        }
+        seed_tracks = detail.tracks
       }
       let body:any = seed_tracks.length > 0 ? { 
         "seed-tracks":JSON.stringify(seed_tracks),
@@ -517,19 +606,18 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
         body["destination-id"] = id
       }
       else{
-        body["saved-tracks"] = JSON.stringify(this.authService.savedTracks)
         body["seed-playlists"]= JSON.stringify(seed_playlists)
       }
       this.http.post<GeneratedResponse>(Routes.Spotify.GenerateTracks(this.trackAmt), body, {headers:!this.authService.personal?{"middle-man":"true"}:{}}).subscribe((response:GeneratedResponse)=>{
         this.generating = false;
         this.hasGenerated = true
         
-        this.latestGeneratedPlaylist = Playlist.FromObject(JSON.parse(response.your_playlist))
-        this.http.post(Routes.Spotify.AddUserSavedPlaylist, {"playlist": Playlist.toPublic(this.latestGeneratedPlaylist)}).subscribe((response:any)=>{
+        this.latestGeneratedPlaylist = JSON.parse(response.your_playlist)
+        this.http.post(Routes.Spotify.AddUserFavourites, {"playlist": this.latestGeneratedPlaylist}).subscribe((response:any)=>{
           this.openDetails(null,this.latestGeneratedPlaylist)
           this.showGenerated()
         },(error)=>{console.log(error);this.generating = false;this.showError(error.status+" - "+error.statusText+": "+error.error)})
-        this.authService.SetGenerationLimits(response.user_limit,response.app_limit)
+        // this.authService.SetGenerationLimits(response.user_limit,response.app_limit)
 
       },(error)=>{console.log(error);this.generating = false;this.showError(error.status+" - "+error.statusText+": "+error.error)})
   
@@ -613,7 +701,7 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
       this.playlistsSelectedGenerated = false
     }
   }
-  openDetails(event:DetailsOpenedEvent|null=null, playlist:Playlist|null=this.latestGeneratedPlaylist){
+  async openDetails(event:DetailsOpenedEvent|null=null, playlist:PublicPlaylist|null=this.latestGeneratedPlaylist){
     if(event){
       this.detailsId = event.id
       this.detailsName = event.name
@@ -640,11 +728,12 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
     return string.charAt(0).toUpperCase() + string.slice(1);
   }
 
-  async playlistCreated(event:boolean){
+  async playlistCreated(event:Playlist){
     if(event){
       await this.ngOnInit()
       this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Playlist created' });
       this.showCreatePlaylistDialog = false
+      this.playlistCreatedEmitter.emit(event);
     }
     else{
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Could not create playlist' });
@@ -664,7 +753,7 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
     this.ytComponent.initPlayer()
     this.startScrolling();
   }
- async playingTrack(track:Track){
+ async playingTrack(track:SavedTrack){
     if(this.plDetailsComponent.shuffled){
       this.ytComponent.tracks = this.plDetailsComponent.tracks
     }
@@ -702,7 +791,9 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
     if(!this.authService.onMobile){
       this.ytDialog.maximize()
     }
+    this.ytComponent.ngOnInit()
     await this.ytComponent.onPlay()
+    
     this.showYoutubeDialog = true
     this.authService.youtube = true
     await this.ytComponent.setScrollPosition()

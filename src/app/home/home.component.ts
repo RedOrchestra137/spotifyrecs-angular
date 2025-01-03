@@ -18,9 +18,19 @@ export class HomeComponent {
       description: 'Tool to generate new recommendations based on your full Spotify library (likes). Will prefer obscure tracks over popular ones. Unlike Spotify Discover Weekly, you can discover anytime, within reason',
       colour: 'bg-green-200',
       id: 'spotifyStyle',
-      image: 'https://storage.googleapis.com/pr-newsroom-wp/1/2023/05/Spotify_Primary_Logo_RGB_White.png',
+      image: 'https://www.svgrepo.com/show/512899/spotify-162.svg',
       imageId: 'spotifyStyle_image'
-    }
+    },
+    // {
+    //   title: 'Auto Slowed+Reverb',
+    //   route: '/slowedNreverb',
+    //   icon: 'pi pi-music',
+    //   description: "Automatically generate your 'original content' by applying common effects to other people's music :)",
+    //   colour: 'bg-blue-200',
+    //   id: 'slowedNreverbStyle',
+    //   image: 'https://www.svgrepo.com/show/320717/echo-ripples.svg',
+    //   imageId: 'slowedNreverbStyle_image'
+    // }
   ];
 
   constructor() { }

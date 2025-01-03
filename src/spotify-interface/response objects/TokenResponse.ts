@@ -1,4 +1,4 @@
-import { Playlist, PlaylistDetail } from "../../interfaces/spotify";
+import { Playlist, PlaylistDetail, PublicPlaylist } from "../../interfaces/spotify";
 import { SpotifyUser } from "./UserResponse";
 
 export interface TokenResponse {
@@ -12,13 +12,11 @@ export interface TokenResponse {
 
 export interface InitAuthResponse{
   url:string,
-  tempToken:string
+  "temp-token":string
 }
 
 export interface GeneratedResponse{
   message:string, 
-  user_limit:number, 
-  app_limit:number,
   your_playlist:any
 }
 
