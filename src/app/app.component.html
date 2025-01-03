@@ -1,0 +1,66 @@
+<app-menubar (toggleSettings)="openSettings()"></app-menubar>
+
+<div class="ml-10 mt-5 mr-10 flex-1 flex-column flex overflow-y-auto">
+    <div class="flex-1 flex justify-content-center">
+      <router-outlet></router-outlet>
+    </div>
+    <footer *ngIf="!authService.onMobile || !authService.youtube" id="footer" class="text-start text-xs w-full flex flex-row p-2">
+      <div>
+        <p-button icon="pi pi-cog" [rounded]="true" [text]="true" [raised]="true" (click)="openSettings()" pTooltip="Preferences"></p-button>
+      </div>
+      <div class="flex flex-row ml-auto align-items-center">
+        <p *ngIf="showInfo" >
+          Created by RedOrchid using Spotify Web API. Any personal data remains on the client side, except for the Spotify user ID. These IDs are hashed and solely used for session management. WIP
+        </p>
+        <i  class="pi pi-info-circle ml-2" (touchstart)="showInfo = true" (touchend)="showInfo = false" (mouseenter)="showInfo = true" (mouseleave)="showInfo = false"> 
+        </i>
+      </div>
+    </footer>
+    <p-sidebar [(visible)]="showSettings" position="left">
+      <ng-template pTemplate="header">   
+        <h3 class="font-bold mr-auto">Preferences</h3>
+      </ng-template>
+      <ng-template pTemplate="content">
+        <div class="flex flex-column align-items-start h-full">
+          <p class="mb-2 mt-3 purple-text {{isDarkMode ? 'purple-text-glow' : ''}}">Popularity: <span class="font-bold {{!popPref ? 'text-blue-500' : 'text-purple-300'}}">{{!popPref ? 'Popular' : 'Obscure'}}</span></p>
+          <div class="flex flex-row align-items-center">
+            <i class="pi pi-star mr-2"></i>
+            <p-inputSwitch [(ngModel)]="popPref" (onChange)="togglePopPref($event)" class="h-fit w-fit"/>
+            <i class="pi pi-star-fill ml-2"></i>
+          </div>
+          <p class="mb-2 mt-5 purple-text {{isDarkMode ? 'purple-text-glow' : ''}}">Only New Artists: <span class="font-bold {{!newArtists ? 'text-red-600' : 'text-green-700'}}">{{!newArtists ? 'Off' : 'On'}}</span></p>
+          <div class="flex flex-row align-items-center">
+            <i class="pi pi-circle mr-2"></i>
+            <p-inputSwitch [(ngModel)]="newArtists" (onChange)="toggleNewArtists($event)" class="h-fit w-fit"/>
+            <i class="pi pi-circle-fill ml-2"></i>
+          </div>
+          <p class="mb-2 mt-5 purple-text {{isDarkMode ? 'purple-text-glow' : ''}}">Only New Albums: <span class="font-bold {{!newAlbums ? 'text-red-600' : 'text-green-700'}}">{{!newAlbums ? 'Off' : 'On'}}</span></p>
+          <div class="flex flex-row align-items-center">
+            <i class="pi pi-circle mr-2"></i>
+            <p-inputSwitch [(ngModel)]="newAlbums" (onChange)="toggleNewAlbums($event)" class="h-fit w-fit"/>
+            <i class="pi pi-circle-fill ml-2"></i>
+          </div>
+          <p class="mb-2 mt-5 text-sm">Allow duplicate albums in recs?  <span class="font-semibold {{noDuplicateAlbums ? 'text-red-600' : 'text-green-700'}}">{{noDuplicateAlbums ? "No" : "Yes"}}</span></p>
+          <div class="flex flex-row align-items-center text-sm">
+            <i class="pi pi-circle mr-2"></i>
+            <p-inputSwitch [(ngModel)]="noDuplicateAlbums" (onChange)="toggleNoDuplicateAlbums($event)" class="h-fit w-fit"/>
+            <i class="pi pi-circle-fill ml-2"></i>
+          </div>
+          <p class="mt-2 text-sm">Allow duplicate artists in recs?  <span class="font-semibold {{noDuplicateArtists ? 'text-red-600' : 'text-green-700'}}">{{noDuplicateArtists ? "No" : "Yes"}}</span></p>
+          <div class="flex flex-row align-items-center text-sm">
+            <i class="pi pi-circle mr-2"></i>
+            <p-inputSwitch [(ngModel)]="noDuplicateArtists" (onChange)="toggleNoDuplicateArtists($event)" class="h-fit w-fit"/>
+            <i class="pi pi-circle-fill ml-2"></i>
+          </div>
+          <div class="mt-20 mr-auto mb-auto">
+            <i class="pi pi-sun mr-2"></i>
+            <p-inputSwitch [ngModel]="isDarkMode" (onChange)="toggleTheme($event)" class="h-fit w-fit"/>
+            <i class="pi pi-moon ml-2"></i>          
+          </div>
+        </div>
+
+      </ng-template>
+    </p-sidebar>
+</div>
+
+

@@ -1,0 +1,19 @@
+<p-galleria 
+    [value]="tracks"
+    (onValueChange)="onTrackChange()"
+    [circular]="true" 
+    [numVisible]="5"
+    [containerStyle]="{ 'width': '30%', 'margin-left': 'auto', 'margin-right': 'auto'}" 
+    [(activeIndex)]="activeIndex"> 
+        <ng-template pTemplate="header">
+            <h3 class="font-bold">Tracks</h3>
+        </ng-template>
+        <ng-template pTemplate="item" let-item>
+            <app-youtube #ytComponent (initialized)="onYtInitialized(ytComponent)"></app-youtube>
+        </ng-template>
+        <ng-template pTemplate="thumbnail" let-item>
+            <div class="grid grid-nogutter justify-content-center">
+                <img [src]="item.GetImage()" />
+            </div>
+        </ng-template>
+</p-galleria>

@@ -1,0 +1,15 @@
+@import "../node_modules/primeng/resources/themes/lara-light-purple/theme.css";
+
+:root {
+    --sidebar-background: rgba(255, 255, 255, 0.5);
+    --sidebar-backdrop: blur(15px);
+    --spotify-green:#71de7a;
+    --button-text-color: rgb(79, 79, 79);
+    --spotify-like-logo: invert(20%);
+    --spotify-playlist-logo:invert(20%) hue-rotate(180deg);
+    --hover-dataview-row: rgba(0, 0, 0, 0.1);
+    --hover-clickable-text: rgba(116, 26, 168, 0.5);
+    --purple-text-color: rgb(97, 26, 168);
+    --speeddial-background-color: rgba(0, 0, 0, 0.8);
+    --speeddial-open: none;
+}

@@ -1,0 +1,126 @@
+<p-dataView class="dataview-playlistDetail" #dv [value]="tracks" *ngIf="!_loading">
+    
+    <ng-template pTemplate="header">
+        <div class="flex flex-column md:flex-row md:justify-content-start">
+            <div class="ml-2 mr-5">
+                <p-button [rounded]="true" [text]="true" pTooltip="{{shuffled ? 'Unshuffle' : 'Shuffle'}}" (click)="shuffle()">
+                    <ng-template pTemplate="icon">
+                        <i class="material-icons {{shuffled ? 'text-purple-600' : 'text-gray-400'}} hover:text-purple-300">shuffle</i>
+                    </ng-template>
+                </p-button>
+            </div>
+            <div class="mb-auto mt-auto mr-5">
+                Sort By:
+            </div>
+            <p-dropdown
+            [options]="sortOptions" [(ngModel)]="sortKey" placeholder="Sort By Name" (onChange)="onSortChange($event)" styleClass="mb-2 md:mb-0 border-round border-1 border-gray-400 w-fit" panelStyleClass="ddPanel" />
+            <div class="mb-auto mt-auto ml-2" >
+                <p-button icon="pi pi-arrow-up" [rounded]="true" [text]="true" pTooltip="Ascending" (click)="toggleAscending()" *ngIf="ascendingSort"/>
+                <p-button icon="pi pi-arrow-down" [rounded]="true" [text]="true" pTooltip="Descending" (click)="toggleAscending()" *ngIf="!ascendingSort"/>
+            </div>
+            <div>
+                <input [(ngModel)]="filterValue" type="text" pInputText class="h-full p-2 ml-0 md:ml-5 border-round border-1 border-gray-400"  placeholder="Search"/>
+            </div>
+            <div *ngIf="hasSelected" class="mb-auto mt-auto ml-auto mr-5">
+                <p-button icon="pi pi-check-square" class="text-gray-{{themeService.getShade(300)}}" [rounded]="true" [text]="true" pTooltip="Add/Remove Selected from Saved" (click)="EditSaved(selectedTracks)" />
+            </div>
+            <div class="mb-auto mt-auto md:ml-auto mr-5 flex flex-row items-center">
+                <p-progressSpinner *ngIf="preLoadingYoutube" styleClass="w-[40px] h-[40px]" strokeWidth="5"></p-progressSpinner>
+                <div *ngIf="!preLoadingYoutube" pTooltip="Preload youtube URLs" class="mx-2">
+                    <button pButton pRipple  class="p-button-rounded p-button-text" (click)="transferToYoutube()">
+                        <img src="https://www.svgrepo.com/show/513089/youtube-168.svg" width="30" class="spotLikeLogo my-2 mx-2">
+                    </button>
+                </div>
+                <div pTooltip="Open in spotify" class="mx-2">
+                    <a href="https://open.spotify.com/playlist/{{playlist.id}}" target="_blank">
+                        <button pButton pRipple  class="p-button-rounded p-button-text" >
+                            <img src="https://www.svgrepo.com/show/512899/spotify-162.svg" width="30" class="spotLikeLogo my-2 mx-2">
+                        </button>
+                    </a>
+
+                </div>
+            </div>
+        </div>
+    </ng-template>
+    <ng-template *ngIf="onMobile" pTemplate="header">
+        <div class="flex flex-column md:flex-row md:justify-content-start">
+            <div class="flex flex-row mb-2">
+                <div>
+                    <p-button  [rounded]="true" [text]="true" pTooltip="{{shuffled ? 'Unshuffle' : 'Shuffle'}}" (click)="shuffle()">
+                        <ng-template pTemplate="icon">
+                            <i class="material-icons {{shuffled ? 'text-purple-600' : 'text-gray-400'}} hover:text-purple-300">shuffle</i>
+                        </ng-template>
+                    </p-button>
+                </div>
+                <div class="mb-auto mt-auto ml-2 flex flex-row items-center">
+                    <p-progressSpinner *ngIf="preLoadingYoutube" styleClass="w-[40px] h-[40px]" strokeWidth="5"></p-progressSpinner>
+                    <div *ngIf="!preLoadingYoutube" pTooltip="Preload youtube URLs" class="mx-2">
+                        <button pButton pRipple  class="p-button-rounded p-button-text" (click)="transferToYoutube()">
+                            <img src="https://www.svgrepo.com/show/513089/youtube-168.svg" width="30" class="spotLikeLogo my-2 mx-2">
+                        </button>
+                    </div>
+                    <div pTooltip="Open in spotify" class="mx-2">
+                        <a href="https://open.spotify.com/playlist/{{playlist.id}}" target="_blank">
+                            <button pButton pRipple  class="p-button-rounded p-button-text" >
+                                <img src="https://www.svgrepo.com/show/512899/spotify-162.svg" width="30" class="spotLikeLogo my-2 mx-2">
+                            </button>
+                        </a>
+
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-row">
+                <div class="mb-auto mt-auto mr-5">
+                    Sort By:
+                </div>
+                <p-dropdown
+                [options]="sortOptions" [(ngModel)]="sortKey" placeholder="Sort By Name" (onChange)="onSortChange($event)" styleClass="mb-2 md:mb-0 border-round border-1 border-gray-400 w-fit" panelStyleClass="ddPanel" />
+                <div class="mb-auto mt-auto ml-2" >
+                    <p-button icon="pi pi-arrow-up" [rounded]="true" [text]="true" pTooltip="Ascending" (click)="toggleAscending()" *ngIf="ascendingSort"/>
+                    <p-button icon="pi pi-arrow-down" [rounded]="true" [text]="true" pTooltip="Descending" (click)="toggleAscending()" *ngIf="!ascendingSort"/>
+                </div>
+            </div>
+            <div>
+                <input [(ngModel)]="filterValue" type="text" pInputText class="h-fit p-2 ml-0 md:ml-5 border-round border-1 border-gray-400"  placeholder="Search"/>
+            </div>
+            <div *ngIf="hasSelected" class="mb-auto mt-auto ml-2">
+                <p-button icon="pi pi-check-square" class="text-gray-{{themeService.getShade(300)}}" [rounded]="true" [text]="true" pTooltip="Add/Remove Selected from Saved" (click)="EditSaved(selectedTracks)" />
+            </div>
+
+        </div>
+    </ng-template>
+    <ng-template pTemplate="list" let-tracks>
+        <div #trackList class="grid grid-nogutter">
+            <div class="col-12" *ngFor="let item of tracks; let first = first" (click)="selected[item.track.id] = !selected[item.track.id]; setLastSelected(item)" class="col-12 dataview-playlist-row {{ selected[item.track.id] ? 'dataview-playlist-row-selected':''}}">
+                <div class="flex flex-column sm:flex-row sm:align-items-center p-4 gap-3" [ngClass]="{ 'border-top-1 surface-border': !first }">
+
+                    <div class="w-fit mr-auto md:mr-0">        
+                        <a href="{{item.GetAlbumUrl()}}" target="_blank" class="h-fit w-fit">
+                            <img pTooltip="Open Album" class="block xl:block border-round hover:shadow-lg hover:cursor-pointer hover:shadow-gray-700" [src]="item.GetImage()" [width]="100"/>
+                        </a>
+                    </div>
+                    <div class="flex flex-1 flex-column md:flex-row justify-content-between md:align-items-center">
+                        <div class="flex" style="flex-direction: column">
+                            <div class="h-fit">
+                                    <div pTooltip="Open Track" class="font-bold text-lg mt-2 h-fit underline cursor-pointer hover-clickable-text " (click)="onPlay(item)">
+                                        {{ item.track.name }}
+                                    </div>
+                            </div>
+                            <div class="text-600 h-fit">By: {{ item.track.artists[0].name }}</div>
+                            <div class="text-sm font-bold  h-fit {{themeService.getPopularityColor(item)}}">
+                                {{ themeService.getPopularityText(item) }}
+                            </div>
+                            <!-- <div class="text-600 h-fit">By: {{ item.owner.display_name }}</div> -->
+                        </div>    
+                    </div>
+                    <div class="w-fit ml-0 md:ml-auto mr-5">
+                        <i class="pi pi-check-square text-lg font-bold h-fit w-fit cursor-pointer {{addedToSavedDict[item.track.id] ? 'text-green-'+themeService.getShade(400) : 'text-gray-'+themeService.getShade(300)}}" pTooltip="{{addedToSavedDict[item.track.id] ? 'Remove from Saved Tracks' : 'Add to Saved Tracks'}}" (click)="EditSaved([item])"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-template>
+</p-dataView> 
+
+
+<p-progressSpinner class="w-fit h-fit mx-auto" *ngIf="_loading"></p-progressSpinner>

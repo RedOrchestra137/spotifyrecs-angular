@@ -1,0 +1,7 @@
+<div class="flex flex-column mt-2 flex-1 justify-content-center h-full">
+    <input pInput [(ngModel)]="playlistName" type="text" pInputText 
+    class="h-fit py-2 pl-2 border-round border-1 border-gray-400 mb-4" placeholder="Playlist Name" />
+    <input pInput [(ngModel)]="playlistDescription" type="text" pInputText
+    class="h-fit py-2 pl-2 border-round border-1 border-gray-400 mb-4" placeholder="Playlist Description" />
+    <p-button (click)="create()" label="Create" icon="pi pi-plus" class="h-fit mt-2 p-button w-fit px-4"></p-button>
+</div>

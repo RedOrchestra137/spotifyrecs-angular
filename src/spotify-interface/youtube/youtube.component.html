@@ -1,0 +1,219 @@
+<div class="flex flex-column justify-content-center w-full">
+    <p-galleria 
+    [value]="tracks"
+    (activeIndexChange)="onPlay()"
+    [circular]="true" 
+    [numVisible]="5"
+    [containerStyle]="{'margin-left': 'auto', 'margin-right': 'auto'}" 
+    [(activeIndex)]="playlistIndex"
+    [showThumbnails]="false"
+    [showThumbnailNavigators]="false"
+    >
+
+    <ng-template pTemplate="item" let-item>
+        <div *ngIf="!authService.onMobile" class="w-full h-full p-2 flex flex-row align-items-center justify-content-center">
+            <div class="mr-20 ml-auto" *ngIf="!screening">
+                <button class="p-button p-button-text p-button-rounded p-button-plain custom-button" pButton pRipple (click)="prevTrack()">
+                    <i class="pi pi-arrow-left custom-icon"></i>
+                </button>
+            </div>
+            <div class="youtube-wrapper">
+                <div class="youtube-container">
+                  <div id="player"></div>
+                </div>
+            </div>    
+            <div class="ml-20 mr-auto" *ngIf="!screening">
+                <button class="p-button p-button-text p-button-rounded p-button-plain custom-button" pButton pRipple (click)="nextTrack()">
+                    <i class="pi pi-arrow-right custom-icon"></i>
+                </button>
+            </div>
+          </div>
+        
+        <div *ngIf="authService.onMobile" class="w-full h-full p-2 flex flex-column align-items-center justify-content-start">
+            <div class="mt-[100px]">
+                <div  class="youtube-container">
+                  <div id="player"></div>
+                </div>
+            </div>    
+            
+            <div class="mx-5 mt-5 w-full flex flex-row align-items-center justify-content-between" *ngIf="!screening">
+                <div >
+                    <button class="p-button p-button-text p-button-rounded p-button-plain" pButton pRipple icon="pi pi-arrow-left" (click)="prevTrack()"></button>
+                </div>
+                <div>
+                    <button class="p-button p-button-text p-button-rounded p-button-plain" pButton pRipple icon="pi pi-arrow-right" (click)="nextTrack()"></button>
+                </div>
+            </div>
+        
+        </div>
+    </ng-template>
+</p-galleria>
+
+<div
+    #dockContainer
+    id="trackDock"
+    (scroll)="onDockScroll()"
+    class="floating-dock flex fixed bottom-0 left-0 right-0 gap-2 px-4 py-2 mx-auto overflow-x-auto "
+    [style.max-width]="thumbBarMaxWidth + 'px'">
+    <div class="flex w-full relative">
+        <div *ngIf="!curTrackinView && scrollInitialized"  class="fixed z-10 w-0" [style.left]="calcLeft" [style.top]="calcTop">
+            <button id="stickyDockResetButton" pTooltip="Back to current track" pButton pRipple class="px-2 py-1 p-button-rounded p-button-plain text-lg backdrop-blur-md text-purple-500" (click)="setScrollPosition()">
+                <i class="shadow-md pi {{curTrackForward?'pi-fast-forward':'pi-fast-backward'}} text-3xl" ></i>
+            </button>
+        </div>
+        
+
+        <!-- Track items -->
+        <div *ngFor="let item of tracks" (click)="onNewTrack(item)" class="relative ml-3">
+            <!-- Centered Icon Overlay -->
+            <i
+                *ngIf="selectedDict[item.track?.id!]"
+                class="pi pi-play text-4xl text-purple-{{ themeService.getShade(300) }} opacity-75"
+                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
+            ></i>
+        
+            <!-- Track Image -->
+            <img
+                id="{{ item.track?.id! }}"
+                class="{{
+                    selectedDict[item.track?.id!]
+                        ? 'border-3 shadow-lg shadow-purple-300 border-solid border-purple-' +
+                          themeService.getShade(300)
+                        : ''
+                }}"
+                pTooltip="{{ item.GetArtist() }} - {{ item.GetTitle() }}"
+                [src]="item.GetImage()"
+                [alt]="item.GetTitle()"
+                [style.width]="thumbNailWidth + 'px'"
+                [style.max-width]="thumbNailWidth + 'px'"
+            />
+        </div>
+    </div>
+</div>
+
+</div>
+
+<style>
+        /* Desktop */
+    @media (min-width: 768px) {
+        .p-galleria-thumbnail-wrapper {
+            height: 30px;
+        }
+    }
+
+    /* Mobile */
+    @media (max-width: 767px) {
+        .p-galleria-thumbnail-wrapper {
+            height: 20px;
+        }
+    }
+    .p-galleria-thumbnail-wrapper {
+        height: 100px !important; /* Set your desired height */
+        overflow: hidden; /* Ensure content doesn't expand the container */
+    }
+    /* Apply a max height to each thumbnail image */
+    .p-galleria-thumbnail-wrapper .ytPlayerThumbnails img {
+        max-height: 100% !important;
+        width: auto;
+        object-fit: cover; /* Ensure image scales within the set height */
+    }
+    /* Style for the button container */
+    .custom-button {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0; /* Remove extra padding */
+    }
+    
+    /* Style for the icon inside the button */
+    .custom-icon {
+        font-size: 24px; /* Adjust as needed */
+        line-height: 1;  /* Prevents icon from floating */
+    }
+    
+    /* Container that wraps the YouTube iframe */
+    .youtube-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        position: relative; /* So that the shadow can be positioned relative to this */
+        padding-top:90px;
+        padding-bottom:50px;
+      }
+    
+    .youtube-container {
+        position: relative;
+        box-shadow: 0px 10px 14px rgba(0, 0, 0, 1);
+        z-index: 1; /* Keeps the iframe on top of the shadow */
+      }
+    
+      /* Shadow animation behind the iframe */
+      .youtube-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: -1; /* Keep shadow behind the iframe */
+        border-radius: 10px;
+        animation: animateShadow 10s infinite ease-in-out;
+        
+        background: linear-gradient(
+          45deg,
+          var(--playerColour1),
+          var(--playerColour2))
+      }
+      
+      /* Keyframe animation */
+      @keyframes animateShadow {
+        0% {
+          transform: scale(0.95);
+          filter: blur(50px);
+        }
+        50% {
+          transform: scale(1.1);
+          filter: blur(30px);
+        }
+        100% {
+          transform: scale(0.95);
+          filter: blur(50px);
+        }
+      }
+      .p-dialog-content{
+        display:flex;
+        
+      }
+      .floating-dock {
+        display: flex;
+        gap: 1rem; /* Space between items */
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 0.5rem 1rem; /* Adjusts dock padding */
+        background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent background */
+        overflow-x: auto; /* Allows horizontal scrolling */
+        white-space: nowrap; /* Keeps items inline */
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5); /* Adds subtle shadow */
+        z-index: 1000; /* Ensures dock is above other elements */
+    }
+    
+    .floating-dock img {
+        border-radius: 8px; /* Rounds image corners */
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .floating-dock img:hover {
+        transform: scale(1.1); /* Scale effect on hover */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Shadow on hover */
+    }
+
+     /* Container with fixed width */
+
+ 
+    </style>
