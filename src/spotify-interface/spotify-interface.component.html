@@ -203,7 +203,7 @@
         id="referenceButton" 
         [model]="playlistButtonItems"  
         *ngIf="!loadingPlaylists" 
-        (onClick)="OpenUserPlaylists(2)" 
+        (onClick)="OpenUserPlaylists(1)" 
         severity="success" 
         class="w-full"
         [ngStyle]="{ '--dynamic-dropdownWidth': buttonWidth + 'px' }"
@@ -295,10 +295,9 @@
         <!-- <div class="flex flex-row justify-content-space-between min-w-fit w-full text-sm mt-3">
             <p class="mx-auto">Daily Tokens Left: <span class="font-semibold text-base {{user_limit < 10 ? 'text-red-500' : user_limit < 25 ? 'text-yellow-500' : 'text-green-500'}}">{{user_limit}}</span></p>
         </div> -->
-        <div>
-            <p-progressSpinner 
-            *ngIf="generating"
-            />
+        <div *ngIf="generating" class="flex flex-column justify-content-center mt-10 w-full mx-auto">
+            <p-progressBar [value]="generationProgress"></p-progressBar>
+            <div class="mx-auto text-sm mt-2" [innerHTML]="generationMessage"></div>
         </div>
         <!-- <a  class="mx-auto" href="{{latestGeneratedPlaylistUrl}}" target="_blank"> -->
         <div *ngIf="hasGenerated && !generating" (click)="openDetails()" class="cursor-pointer flex flex-column justify-content-center mt-14 border-2 border-gray-400 border-solid rounded-lg pb-3 px-3 {{themeService.isDarkMode ? 'bg-slate-800' : 'bg-slate-300'}} backdrop-blur-sm">
@@ -319,14 +318,13 @@
     [(visible)]="showPlaylistDialog" 
     [style]="{ width: '80vw' }" 
     [breakpoints]="{ '1199px': '85vw', '575px': '100vw' }" 
-    [maximizable]="true"
+    [maximizable]="false"
     [dismissableMask]="true"
     [baseZIndex]="10005"
     >
     <app-playlist #plComponent (playlistSelected)="playlistSelected($event)" 
     (selectedPlaylists)="selectedPlaylists($event)" (clearedSelection)="selectedPlaylistsCleared()"
     (addingOtherPlaylists)="addingOtherPlaylists()" (openingDetails)="openDetails($event)"
-    (creatingPlaylist)="createPlaylist()"
     >
     </app-playlist>
 </p-dialog>
@@ -336,12 +334,12 @@
     [(visible)]="showScreenerDialog" 
     [style]="{ width: '80vw' }" 
     [breakpoints]="{ '1199px': '85vw', '575px': '100vw' }" 
-    [maximizable]="true"
+    [maximizable]="false"
     [dismissableMask]="true"
     [baseZIndex]="10006"
     >
 </p-dialog>
-<p-dialog 
+<!-- <p-dialog 
     header="Create Playlist"
     [(visible)]="showCreatePlaylistDialog"
     [modal]="true"
@@ -353,7 +351,7 @@
     [baseZIndex]="10007"
     >
     <app-create-playlist #createPlComponent (_playlistCreated)="playlistCreated($event)"></app-create-playlist>
-</p-dialog>
+</p-dialog> -->
 <p-dialog
     header="Add another Playlist"
     [(visible)]="showOtherPlaylistDialog"
@@ -362,7 +360,7 @@
     [breakpoints]="{ '1199px': '50vw', '575px': '100vw' }" 
     [draggable]="false"
     [dismissableMask]="true"
-    [maximizable]="true"
+    [maximizable]="false"
     [baseZIndex]="10008"
     >
     <app-add-other-playlist #addOtherPlComponent (addedOtherPlaylists)="addedOtherPlaylists($event)"></app-add-other-playlist>
@@ -374,7 +372,7 @@
     [style]="{ width: '80vw' }" 
     [breakpoints]="{ '1199px': '85vw', '575px': '100vw' }" 
     [draggable]="false" 
-    [maximizable]="true"
+    [maximizable]="false"
     [dismissableMask]="true"
     class="playlistDetailOverlay"
     [baseZIndex]="10009"
@@ -391,7 +389,7 @@
   [closable]="true"
   [dismissableMask]="true"
   [keepInViewport]="true"
-  [maximizable]="true"
+  [maximizable]="false"
   (onShow)="initPlayer()"
   (onHide)="onYoutubeClose()"
   class="overflow-hidden"

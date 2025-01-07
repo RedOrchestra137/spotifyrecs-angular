@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { SpotifyAuthService } from '../../../services/spotify-auth.service';
 import { Routes } from '../../../../routes';
 import { ImportsModule } from '../../../app/imports';
-import { Dictionary, PlaylistDetail, PublicPlaylist, SavedTrack, Track, TrackView } from '../../../interfaces/spotify';
+import { Dictionary, Playlist, PlaylistDetail, PublicPlaylist, SavedTrack, Track, TrackView } from '../../../interfaces/spotify';
 import { firstValueFrom } from 'rxjs';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { SafePipe } from '../../../app/pipe';
@@ -235,6 +235,10 @@ export class PlaylistDetailComponent implements OnInit {
           if((response as PublicPlaylist).last_refreshed > 0||(response as any).generated){
             this.playlist = response as PublicPlaylist
             this.tracks = this.playlist.tracks;
+          }
+          else if ((response as PlaylistDetail).href ) {
+            this.playlist = Playlist.toPublic(response as Playlist) as PublicPlaylist;
+            this.tracks = (response as PlaylistDetail).tracks.items.map(x => { let t:Track = x; return Track.ToSavedTrack(t); });
           }
           this.tracks.forEach(track => {
             if (track) {

@@ -44,6 +44,10 @@ export class SpotifyAuthService implements OnInit {
   ngOnInit(): void {
   }
 
+  public get lsUser(){
+    return localStorage.getItem("user_token")
+  }
+
   public get newlySavedTracks():PublicPlaylist|undefined {return this.recentFavourites}
 
   checkTokens():boolean {
@@ -302,6 +306,7 @@ export class SpotifyAuthService implements OnInit {
       this.avatar_img = user.images[0].url
     }
     this.avatar_lbl = user.display_name
+    
   }
 
   async SetSavedTracks() {

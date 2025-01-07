@@ -245,7 +245,6 @@ export interface ITrack {
     GetAlbumName(): string;
     GetAlbumUrl(): string;
     GetTitle(): string;
-    ToSavedTrack(album_id:string, artist_id:string): Promise<SavedTrack>;
   }
 
 export class Track implements ITrack {
@@ -357,27 +356,27 @@ export class Track implements ITrack {
     }
     return ""
   }
-  async ToSavedTrack(): Promise<SavedTrack> {
+  static ToSavedTrack(track:Track): SavedTrack {
     let savedTrack = {
-      added_at: this.added_at??'',
-      album_id: this.track?.album?.id??'',
-      artist_ids: this.track?.artists.map(x => x.id)??[],
-      track_name: this.track?.name??'',
-      artist_name: this.track?.artists[0]?.name??'',
-      track_length: this.track?.duration_ms??0,
-      id: this.track?.id??'',
+      added_at: track.added_at??'',
+      album_id: track.track?.album?.id??'',
+      artist_ids: track.track?.artists.map(x => x.id)??[],
+      track_name: track.track?.name??'',
+      artist_name: track.track?.artists[0]?.name??'',
+      track_length: track.track?.duration_ms??0,
+      id: track.track?.id??'',
       saved: false,
       accounted_for: 0,
       playlist_ids: [],
       favourite: false,
       youtube_url: '',
-      popularity: this.track?.popularity??0,
-      available_markets: this.track?.album?.available_markets.length??0,
-      album_name: this.track?.album?.name??'',
-      album_release_date: this.track?.album?.release_date??'',
-      album_url: this.GetAlbumUrl(),
-      album_image: this.GetImage(),
-      preview_url: this.track?.preview_url??''
+      popularity: track.track?.popularity??0,
+      available_markets: track.track?.album?.available_markets.length??0,
+      album_name: track.track?.album?.name??'',
+      album_release_date: track.track?.album?.release_date??'',
+      album_url: track.track?.album.href??'',
+      album_image: track.track?.album.images[0].url??'',
+      preview_url: track.track?.preview_url??''
     }
     return savedTrack
   }

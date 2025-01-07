@@ -171,16 +171,6 @@ export class PlaylistComponent implements OnInit{
           tooltipOptions: {
             tooltipLabel: 'Search',
           }
-        },
-        {
-          icon: 'pi pi-plus',
-  
-          command: () => {
-            this.createPlaylist()          
-          },
-          tooltipOptions: {
-            tooltipLabel: 'Create Playlist',
-          }
         }
       ]
     }else{
@@ -196,15 +186,6 @@ export class PlaylistComponent implements OnInit{
           }
         },
         {
-          icon: 'pi pi-check-square',
-          command: () => {
-            this.clearSelection()
-          },
-          tooltipOptions: {
-            tooltipLabel: 'Clear Selection',
-          }
-        },
-        {
           icon: 'pi pi-search',
           command: () => {
             this.toggleSearch()
@@ -217,10 +198,10 @@ export class PlaylistComponent implements OnInit{
           icon: 'pi pi-plus',
   
           command: () => {
-            this.createPlaylist()          
+            this.addOtherPlaylist()          
           },
           tooltipOptions: {
-            tooltipLabel: 'Create Playlist',
+            tooltipLabel: 'Add Other Playlists',
           }
         },
         {

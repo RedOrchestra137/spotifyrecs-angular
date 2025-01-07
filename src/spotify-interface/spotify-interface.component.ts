@@ -24,6 +24,7 @@ import { InputOtpChangeEvent } from 'primeng/inputotp';
 import { v4 as uuidv4 } from 'uuid';
 import { OwnershipCheckComponent } from './ownership-check/ownership-check.component';
 import { Navigation, Router } from '@angular/router';
+import { ProgressData, ProgressService } from '../services/progress.service';
 
 export enum PlayListDialogState {
   SelectMultipleLiked,
@@ -119,16 +120,11 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
   savedTracksSubscription:Subscription
   generateOptions: MenuItem[]|undefined
 
+  generationMessage:string = ""
+  generationProgress:number = 0
+
 
   playlistButtonItems:MenuItem[] = [
-    {
-        label: 'Select Playlists for recommendations',
-        command: () => {
-            this.OpenUserPlaylists(PlayListDialogState.SelectMultipleGenerated);
-        },
-        styleClass: 'generateDropdownOption'
-        
-    },
     {
       label: 'Get your recent favourites',
       command: () => {
@@ -143,7 +139,8 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
     private http:HttpClient,
     private cdr: ChangeDetectorRef,
     public themeService: ThemeService,
-    private Router:Router
+    private Router:Router,
+    private progressService:ProgressService
   ) {
     this.sessionId = uuidv4()
     this.savedTracksSubscription = this.authService.savedTracksFinished.subscribe((value) => {
@@ -334,9 +331,10 @@ public get buttonWidth(): number {
     ];
     this.activeItem = this.items[0];
     
-    if(!this.authService.authenticatedUser&&this.authService.authenticated){
+    if(!this.authService.authenticatedUser&&this.authService.lsUser){
       await this.http.get<SpotifyUser>(Routes.Spotify.GetUser).subscribe((response)=>{
         this.authService.SetUser(response)
+        this.authService.authenticated = true
       }, (error)=>{
         if(error.status == 444){
           this.authService.logout()
@@ -536,8 +534,21 @@ public get buttonWidth(): number {
     })
   }
 
-  GenerateTracks(id:string){
+  async GenerateTracks(id:string){
     this.generating = true
+    this.progressService.newDataEvent.subscribe((data:ProgressData)=>{
+      this.generationProgress = data.progress
+      this.generationMessage = data.message
+      if(data.response){
+        this.generating = false
+        this.progressService.stop()
+        this.generationMessage = ""
+        this.generationProgress = 0
+      }
+    })
+    this.progressService.startProcess(this.authService.authenticatedUser?.id??"",this.authService.lsUser??"")
+    this.generationMessage = "Starting Recommendation Process.."
+    this.generationProgress = 0
     if(id==""&&this.authService.personal){
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Please provide ID of playlist to store recommendations' });
       this.generating = false

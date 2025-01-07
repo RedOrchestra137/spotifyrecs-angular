@@ -94,10 +94,10 @@
             <div class="col-12" *ngFor="let item of tracks; let first = first" (click)="selected[item.id] = !selected[item.id]; setLastSelected(item)" class="col-12 dataview-playlist-row {{ selected[item.id] ? 'dataview-playlist-row-selected':''}}">
                 <div class="flex flex-column sm:flex-row sm:align-items-center p-4 gap-3" [ngClass]="{ 'border-top-1 surface-border': !first }">
 
-                    <div class="w-fit mr-auto md:mr-0">        
-                        <a href="{{item.album_url}}" target="_blank" class="h-fit w-fit">
-                            <img pTooltip="Open Album" class="block xl:block border-round hover:shadow-lg hover:cursor-pointer hover:shadow-gray-700" [src]="item.album_image" [width]="100"/>
-                        </a>
+                    <div class="w-fit mr-auto md:mr-0" (click)="onPlay(item)">        
+                        <!-- <a href="{{item.album_url}}" target="_blank" class="h-fit w-fit"> -->
+                            <img pTooltip="Open Track" class="block xl:block border-round hover:shadow-lg hover:cursor-pointer hover:shadow-gray-700" [src]="item.album_image" [width]="100"/>
+                        <!-- </a> -->
                     </div>
                     <div class="flex flex-1 flex-column md:flex-row justify-content-between md:align-items-center">
                         <div class="flex" style="flex-direction: column">
