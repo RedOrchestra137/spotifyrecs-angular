@@ -552,6 +552,7 @@ public get buttonWidth(): number {
     if(id==""&&this.authService.personal){
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Please provide ID of playlist to store recommendations' });
       this.generating = false
+      
       return 
     }
 
