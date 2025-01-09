@@ -75,7 +75,7 @@
     <ng-template pTemplate="list" let-userPlaylists>
         <div class="grid grid-nogutter">
             <div class="col-12" *ngFor="let item of userPlaylists; let first = first" class="col-12 dataview-playlist-row">
-                <div class="flex flex-column sm:flex-row sm:align-items-center px-4 {{state==2 ? 'py-3': 'py-1'}} gap-3" [ngClass]="{ 'border-top-1 surface-border': !first }">
+                <div class="flex flex-row align-items-center px-4 {{state==2 ? 'py-3': 'py-1'}} gap-3" [ngClass]="{ 'border-top-1 surface-border': !first }">
                     <div (click)="openDetails(item.id,item.name)" class="md:w-10rem flex-column flex md:align-items-center align-items-start">
                         <!-- <a href="{{getPlaylistUrl(item)}}" target="_blank"> -->
                         <img class="block xl:block border-round hover:shadow-lg hover:cursor-pointer hover:shadow-gray-700" pTooltip="Open Playlist" [src]="getImage(item)" [alt]="item.name" width="{{state==2 ? 90: 75}}"/>

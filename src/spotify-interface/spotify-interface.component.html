@@ -2,13 +2,13 @@
 <div *ngIf="!isAuthenticated" class="flex align-items-start mr-20 pt-5 justify-content-center w-full h-fit">
     <div class="flex flex-column w-full">
         
-        <p-stepper [linear]="true" *ngIf="!authService.personal && registering" class="mx-auto">
+        <p-stepper [linear]="true" *ngIf="!authService.personal && registering" class="mx-auto max-w-full">
             <p-stepperPanel header="Spotify username">
                 <ng-template pTemplate="content" let-nextCallback="nextCallback" let-index="index">
                     <div class="flex flex-row w-full h-fit">
                         <div class="flex flex-column h-full w-full">
                             <p class="text-xl text-center">Enter your <span style="color: var(--spotify-green);font-weight: semi-bold;">Spotify</span> username</p>
-                            <p class="text-md text-center">Can be found <a href="https://www.spotify.com/account/profile/" target="_blank" class="text-blue-500 underline">here</a></p>
+                            <p class="text-md text-center">Can be found <a href="https://www.spotify.com/account/profile/" target="_blank" class="text-blue-500 underline">on your profile</a></p>
                             <div class="w-full mt-3 h-0 flex justify-content-center rounded-lg border-1" style="border-color: var(--spotify-green)"></div>
                             <div class="w-full h-fit flex mt-6 mb-5 flex-column">
                                 <div class="flex flex-row align-items-center w-[75%] mx-auto">
@@ -33,9 +33,10 @@
                     <div class="flex pt-4 justify-content-end">
                         <p-button 
                             label="Submit username" 
+                            [disabled]="!validUserName"
                             icon="pi pi-arrow-right" 
                             iconPos="right" 
-                            (onClick)="validUserName?nextCallback.emit():invalidUsername()" />
+                            (onClick)="nextCallback.emit()" />
                     </div>
                     <p class="w-full text-start pl-2 text-sm text-blue-300 underline" ><span class="hover:cursor-pointer" (click)="Login()">Already have an account?</span></p>
 
@@ -53,11 +54,11 @@
                     </div>
                 </ng-template>
             </p-stepperPanel>
-            <p-stepperPanel header="Save your password">
+            <p-stepperPanel header="Save your (temporary) password">
                 <ng-template pTemplate="content" let-prevCallback="prevCallback" let-index="index">
                     <div class="flex flex-column h-12rem">
-                        <div class="border-2 border-dashed surface-border border-round surface-ground py-2 flex flex-column justify-content-center align-items-center font-medium">
-                            <p>Your password: <span class="font-bold text-purple-300">{{tempPassword}}</span></p>
+                        <div class="border-2 border-dashed surface-border border-round surface-ground py-2 px-auto flex flex-column justify-content-center align-items-center font-medium">
+                            <p class="text-center">Your password: <span class="font-bold text-purple-300">{{tempPassword}}</span></p>
                             <p>(can be changed later)</p>
                         </div>
                         <p-button (click)="Login()" size="small" pButton pRipple class="p-button-success h-20 mt-3 p-10 min-w-fit shadow-md hover:shadow-lg hover:shadow-slate-500 shadow-slate-500 mx-auto">
