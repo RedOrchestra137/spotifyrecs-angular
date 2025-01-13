@@ -1,6 +1,7 @@
 import { environment } from "./src/environments/environment"
 export class Routes{
     static WebBaseSpotify = environment.apiUrl
+    static StreamServerBase = environment.streamServer
     static Spotify = {
         Authenticate: this.WebBaseSpotify+"users/getAuthURL",
         CheckAuthorized: this.WebBaseSpotify+"isAuthorized",
@@ -39,6 +40,11 @@ export class Routes{
         ByUser(userId:string,base:string):string{return (base+"/user/"+userId)},
         ByArtist(artistId:string,base:string):string{return (base+"/artist/"+artistId)},
         UserRelation(base:string):string{return (base+"/user")}
+    }
+    static AudioStream = {
+        Convert(url:string): string { return Routes.StreamServerBase + "convert"+ "?url=" + url },
+        Stream(hash:string): string { return Routes.StreamServerBase + "stream/"+ hash },
+        Preload: this.StreamServerBase + "preload"
     }
     static Localization = {
         GetGeoLocation: "https://geolocation-db.com/json/"

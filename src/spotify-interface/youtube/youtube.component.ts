@@ -42,6 +42,9 @@ export class YoutubeComponent implements OnInit {
   selectedDict : Dictionary<boolean> = {}
   mouseX: number = 0;
   mouseY: number = 0;
+
+  currentTrackStreamUrl = ""
+
   public get styles(){
     const colours = this.colours.length > 1 ? this.colours : ['var(--purple-text-color)', 'var(--spotify-green)'];
     return [
@@ -235,6 +238,12 @@ export class YoutubeComponent implements OnInit {
     return (this.currentTrack?.['artist_name']||"Unknown") + " - " + (this.currentTrack?.['track_name']|| "Unknown")
   }
 
+  async ConvertToAudioStream(){
+    this.http.post(Routes.AudioStream.Convert(this.youtubeUrl), {}).subscribe((data:any)=>{
+      this.currentTrackStreamUrl = Routes.AudioStream.Stream(data.path.split('/').pop())
+    })
+  }
+
   async getMostProminentColours(): Promise<string[]>{
     try {
       // Ensure there is a valid image URL
@@ -378,23 +387,33 @@ triggerAnimation() {
       const trackName = this.currentTrack['track_name']
       const artistName = this.currentTrack['artist_name']
       const length = Math.round(this.currentTrack['track_length']/ 1000);
-      let savedTrack = this.authService.savedTracks.find(x => x.id == this.currentTrack?.id)
-      let index = this.authService.savedTracks.findIndex(x => x.id == this.currentTrack?.id)
-      if (savedTrack?.youtube_url) {
-        this.youtubeUrl = savedTrack.youtube_url
-      }
-      else{
-        const response: any = await firstValueFrom(
-          this.http.get(Routes.Spotify.GetYoutubeUrl, {
-            params: { t: trackName, a: artistName, l:length},
-          })
-        );
-        this.youtubeUrl = response.message;
-        if(savedTrack){
-          savedTrack.youtube_url = this.youtubeUrl
-          this.authService.savedTracks.splice(index, 1, savedTrack)
+      let tracksToCheck = []
+      this.playlistIndex = this.tracks.indexOf(this.currentTrack);
+      let nextIndex = this.playlistIndex+1>this.tracks.length-1?this.tracks.length-1:this.playlistIndex+1
+      let prevIndex = this.playlistIndex-1<0?0:this.playlistIndex-1
+      tracksToCheck.push(...[this.tracks[prevIndex], this.currentTrack, this.tracks[nextIndex]])
+      for (let track of tracksToCheck){
+        let savedTrack = this.authService.savedTracks.find(x => x.id == track?.id)
+        let index = this.authService.savedTracks.findIndex(x => x.id == track?.id)
+        if (savedTrack?.youtube_url) {
+          if(track?.id == this.currentTrack?.id){
+            this.youtubeUrl = savedTrack.youtube_url
+          }
+        }
+        else{
+          const response: any = await firstValueFrom(
+            this.http.get(Routes.Spotify.GetYoutubeUrl, {
+              params: { t: trackName, a: artistName, l:length},
+            })
+          );
+          this.youtubeUrl = response.message;
+          if(savedTrack){
+            savedTrack.youtube_url = this.youtubeUrl
+            this.authService.savedTracks.splice(index, 1, savedTrack)
+          }
         }
       }
+     
       const videoId = this.youtubeUrl.split('v=')[1];
       if (!videoId) {
         console.error('Invalid YouTube URL: Unable to extract video ID');

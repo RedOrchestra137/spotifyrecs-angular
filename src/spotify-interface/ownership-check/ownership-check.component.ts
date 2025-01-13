@@ -16,7 +16,7 @@ import { ImportsModule } from '../../app/imports';
 export class OwnershipCheckComponent {
   @Input() ownerShipCode:string|undefined
   tempPassword:string|undefined
-  @Input() authName!:string
+  @Input() spotifyLogin!:string
   @Input() sessionId:string|undefined
   @Output() ownershipCallback:EventEmitter<any> = new EventEmitter()
 
@@ -27,7 +27,7 @@ export class OwnershipCheckComponent {
     this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Could not verify ownership, please try again' });
   }
   async verifyAccountOwnership():Promise<boolean>{
-    let ans = await firstValueFrom(this.http.post(Routes.Spotify.CheckUserAnswer(this.authName), {
+    let ans = await firstValueFrom(this.http.post(Routes.Spotify.CheckUserAnswer(this.spotifyLogin), {
       "session_id":this.sessionId,
       "code":this.ownerShipCode
     })).then((response:any)=>{

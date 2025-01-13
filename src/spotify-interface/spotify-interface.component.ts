@@ -378,13 +378,13 @@ public get buttonWidth(): number {
   onUsernameChange(event:any) {
     this.checking = true
 
-    this.http.post(Routes.Spotify.CheckUserQuestion(this.authName),{"session_id":this.sessionId} ).subscribe((response:any)=>{
+    this.http.post(Routes.Spotify.CheckUserQuestion(this.spotifyLogin),{"session_id":this.sessionId} ).subscribe((response:any)=>{
       this.validUserName = true
       this.userNameError = false
       this.checking = false
       this.ownerShipCode = response['code']
       this.ownershipCheck.ownerShipCode = this.ownerShipCode
-      this.ownershipCheck.authName = this.authName
+      this.ownershipCheck.spotifyLogin = this.spotifyLogin
       this.ownershipCheck.sessionId = this.sessionId
     }, (error)=>{
       this.validUserName = false

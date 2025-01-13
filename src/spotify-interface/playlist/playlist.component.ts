@@ -540,7 +540,7 @@ export class PlaylistComponent implements OnInit{
   }
   async refresh(){
     this.refreshing = true
-    await this.ngOnInit()
+    await this.loadPlaylists()
     this.refreshing = false
   }
 }
