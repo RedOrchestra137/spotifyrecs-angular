@@ -3,9 +3,9 @@
     <ng-template pTemplate="header">
         <div class="flex flex-column md:flex-row md:justify-content-start">
             <div class="ml-2 mr-5">
-                <p-button [rounded]="true" [text]="true" pTooltip="{{shuffled ? 'Unshuffle' : 'Shuffle'}}" (click)="shuffle()">
+                <p-button [rounded]="true" [text]="true" pTooltip="{{audioService.shuffled ? 'Unshuffle' : 'Shuffle'}}" (click)="shuffle()">
                     <ng-template pTemplate="icon">
-                        <i class="material-icons {{shuffled ? 'text-purple-600' : 'text-gray-400'}} hover:text-purple-300">shuffle</i>
+                        <i class="material-icons {{audioService.shuffled ? 'text-purple-600' : 'text-gray-400'}} hover:text-purple-300">shuffle</i>
                     </ng-template>
                 </p-button>
             </div>
@@ -46,9 +46,9 @@
         <div class="flex flex-column md:flex-row md:justify-content-start">
             <div class="flex flex-row mb-2">
                 <div>
-                    <p-button  [rounded]="true" [text]="true" pTooltip="{{shuffled ? 'Unshuffle' : 'Shuffle'}}" (click)="shuffle()">
+                    <p-button  [rounded]="true" [text]="true" pTooltip="{{audioService.shuffled ? 'Unshuffle' : 'Shuffle'}}" (click)="shuffle()">
                         <ng-template pTemplate="icon">
-                            <i class="material-icons {{shuffled ? 'text-purple-600' : 'text-gray-400'}} hover:text-purple-300">shuffle</i>
+                            <i class="material-icons {{audioService.shuffled ? 'text-purple-600' : 'text-gray-400'}} hover:text-purple-300">shuffle</i>
                         </ng-template>
                     </p-button>
                 </div>
@@ -113,8 +113,8 @@
                             <!-- <div class="text-600 h-fit">By: {{ item.owner.display_name }}</div> -->
                         </div>    
                     </div>
-                    <div class="w-fit ml-0 md:ml-auto mr-5 h-fit flex flex-row items-center gap-5">
-                        <audio [volume]="0.2" *ngIf="playingTrackId == item.id" class="h-fit w-fit" (ended)="previewTrack(item)" autoplay [src]="audioUrl"></audio>
+                    <!-- <div class="w-fit ml-0 md:ml-auto mr-5 h-fit flex flex-row items-center gap-5"> -->
+                        <!-- <audio [volume]="0.2" *ngIf="playingTrackId == item.id" class="h-fit w-fit" (ended)="previewTrack(item)" autoplay [src]="audioUrl"></audio>
                         <div (click)="previewTrack(item)" *ngIf="playingTrackId == item.id" class="spinner-container cursor-pointer">
                             <p-progressSpinner 
                               styleClass="spinner h-2rem w-2rem" 
@@ -123,12 +123,12 @@
                               animationDuration="4s">
                             </p-progressSpinner>
                             <i class="pause-icon pi pi-pause"></i> <!-- Font Awesome or PrimeIcons pause icon -->
-                        </div>
-                        <i *ngIf="playingTrackId != item.id" class="pi pi-play-circle text-3xl font-bold h-fit w-fit cursor-pointer" pTooltip="Preview" (click)="previewTrack(item)"></i>
-                        <div class="w-fit ml-0 md:ml-auto mr-5">
+                        <!-- </div>
+                        <i *ngIf="playingTrackId != item.id" class="pi pi-play-circle text-3xl font-bold h-fit w-fit cursor-pointer" pTooltip="Preview" (click)="previewTrack(item)"></i>  -->
+                        <div class="w-fit mr-13">
                             <i class="pi pi-check-square text-xl font-bold h-fit w-fit cursor-pointer {{item.favourite ? 'text-green-'+themeService.getShade(400) : 'text-gray-'+themeService.getShade(300)}}" pTooltip="{{item.favourite ? 'Remove from Favourites' : 'Add to Favourites'}}" (click)="EditSaved([item])"></i>
                         </div>
-                    </div>
+                    <!-- </div> -->
 
                 </div>
             </div>

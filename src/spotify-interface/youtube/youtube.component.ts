@@ -9,6 +9,7 @@ import { ChangeDetectorRef } from '@angular/core';
 import { SpotifyAuthService } from '../../services/spotify-auth.service';
 import { ThemeService } from '../../services/theme.service';
 import invert, { RGB, RgbArray, HexColor, BlackWhite } from 'invert-color';
+import { AudioService } from '../../services/audio.service';
 
 @Component({
   selector: 'app-youtube',
@@ -23,18 +24,14 @@ export class YoutubeComponent implements OnInit {
   @Output("trackChange") trackChange = new EventEmitter();
   @ViewChild('dockContainer') dockContainer!: ElementRef;
   
-  ogTracks: SavedTrack[] = []
-  shuffledTracks: SavedTrack[] = []
-  playlistIndex: number = 0
+
   player: any = null;
   isPlayerReady: boolean = false;  // Flag to indicate if player is ready
   queuedVideoId: string | null = null;  // Store the video ID if the player isn't ready
   playerInitialized: boolean = false;  // Track if the player was initialized
-  youtubeUrl: string = '';
   youtubeDialogVisible: boolean = false;
   scrollInitialized: boolean = false;
   done: boolean = false;
-  shuffled:boolean = false
   tag: HTMLScriptElement = document.createElement('script');
   firstScriptTag = document.getElementsByTagName('script')[0]
   screening: boolean = false;
@@ -42,8 +39,6 @@ export class YoutubeComponent implements OnInit {
   selectedDict : Dictionary<boolean> = {}
   mouseX: number = 0;
   mouseY: number = 0;
-
-  currentTrackStreamUrl = ""
 
   public get styles(){
     const colours = this.colours.length > 1 ? this.colours : ['var(--purple-text-color)', 'var(--spotify-green)'];
@@ -109,7 +104,7 @@ export class YoutubeComponent implements OnInit {
     }
 }
   public get currentTrackRect(){
-    return document.getElementById(this.currentTrack?.id!)?.getBoundingClientRect()
+    return document.getElementById(this.audioService.currentTrack?.id!)?.getBoundingClientRect()
   }
 
   public get calcTop(){
@@ -123,15 +118,7 @@ export class YoutubeComponent implements OnInit {
   }
   
   ngOnInit(): void {
-  }
-
-  keepPlayingInBackground() {
-    if (this.player && this.isPlayerReady) {
-      console.log('Continuing playback in the background');
-      this.player.playVideo(); // Continue playing the current video
-    } else {
-      console.log('Player is not ready. Cannot continue playback in the background.');
-    }
+    
   }
 
   public get calcLeft(){
@@ -182,7 +169,7 @@ export class YoutubeComponent implements OnInit {
   }
   
   public get ColoursText() {
-    const colours = this.colours.length > 1 ? this.colours : ['var(--purple-text-color)', 'var(--spotify-green)'];
+    const colours = this.colours.length > 1 ? this.colours : ['#ff0000', '#00ff00'];
     const inverseColours = [invert(colours[0]), invert(colours[1])];
     return {
       'background-image': `radial-gradient(circle, ${colours[1]}, ${colours[0]})`,
@@ -196,35 +183,27 @@ export class YoutubeComponent implements OnInit {
 }
 
   public constructor(private http:HttpClient,public el: ElementRef,
-    private cdr: ChangeDetectorRef, public authService: SpotifyAuthService, public themeService: ThemeService
+    private cdr: ChangeDetectorRef, public authService: SpotifyAuthService, public themeService: ThemeService, public audioService:AudioService
   ) {
     document.onmousemove = this.handleMouseMove;
 
   }
-  public get tracks(): SavedTrack[]{
-    return this.shuffled? this.shuffledTracks : this.ogTracks
-  }
-  public set tracks(value: SavedTrack[]){
-    this.ogTracks = value
-    this.playlistIndex = this.ogTracks.length>3?3:this.ogTracks.length-1
-  }
+
   async onShuffle(){
-    this.shuffled = !this.shuffled
-    this.shuffledTracks = Array.from(this.ogTracks.sort(() => Math.random() - 0.5)).filter(x=>x?.id!=this.currentTrack?.id)
+    this.audioService.shuffle()
     // this.shuffledTracks.unshift(this.currentTrack)
-    this.playlistIndex = 0
-    for(let track of this.ogTracks){
-      this.selectedDict[track?.id!] = this.playlistIndex == this.shuffledTracks.indexOf(track)
+    for(let track of this.audioService.ogTracks){
+      this.selectedDict[track?.id!] = this.audioService.playlistIndex == this.audioService.shuffledTracks.indexOf(track)
     }
-    this.setNewTrack(this.shuffledTracks[0])
+    this.setNewTrack(this.audioService.shuffledTracks[0])
     await this.onPlay()
     this.onDockScroll()
     this.setScrollPosition()
   }
   setNewTrack(track:SavedTrack){
-    this.selectedDict[this.currentTrack?.id!] = false;
+    this.selectedDict[this.audioService.currentTrack?.id!] = false;
     this.selectedDict[track?.id!] = true;
-    this.playlistIndex = this.tracks.indexOf(track);
+    this.audioService.playlistIndex = this.audioService.tracks.indexOf(track);
   }
   async onNewTrack(track:SavedTrack){
     this.setNewTrack(track)
@@ -235,19 +214,13 @@ export class YoutubeComponent implements OnInit {
     return item.track?.id; // Replace 'id' with a unique identifier for each track item
 }
   getYoutubeHeader():string{
-    return (this.currentTrack?.['artist_name']||"Unknown") + " - " + (this.currentTrack?.['track_name']|| "Unknown")
-  }
-
-  async ConvertToAudioStream(){
-    this.http.post(Routes.AudioStream.Convert(this.youtubeUrl), {}).subscribe((data:any)=>{
-      this.currentTrackStreamUrl = Routes.AudioStream.Stream(data.path.split('/').pop())
-    })
+    return (this.audioService.currentTrack?.['artist_name']||"Unknown") + " - " + (this.audioService.currentTrack?.['track_name']|| "Unknown")
   }
 
   async getMostProminentColours(): Promise<string[]>{
     try {
       // Ensure there is a valid image URL
-      const imageUrl = this.currentTrack?.album_image || "";
+      const imageUrl = this.audioService.currentTrack?.album_image || "";
   
       if (!imageUrl) {
         console.log("No album image found.");
@@ -271,17 +244,14 @@ export class YoutubeComponent implements OnInit {
   }
 
   public get youtubeID(): string{
-    return this.youtubeUrl.split("v=")[1]
+    return this.audioService.youtubeUrl.split("v=")[1]
   }
 
-  public get currentTrack(): SavedTrack{
-    return this.tracks[this.playlistIndex]
-  }
   async nextTrack() {
-    if(this.playlistIndex + 1 >= this.tracks.length){
+    if(this.audioService.playlistIndex + 1 >= this.audioService.tracks.length){
       return
     }
-    this.onNewTrack(this.tracks[this.playlistIndex+1])
+    this.onNewTrack(this.audioService.tracks[this.audioService.playlistIndex+1])
 
   }
   ngOnChanges(changes: SimpleChanges) {
@@ -300,10 +270,10 @@ triggerAnimation() {
     }
 }
   async prevTrack(){
-    if(this.playlistIndex - 1 < 0){
+    if(this.audioService.playlistIndex - 1 < 0){
       return
     }
-    this.onNewTrack(this.tracks[this.playlistIndex-1])
+    this.onNewTrack(this.audioService.tracks[this.audioService.playlistIndex-1])
   }
   ngAfterViewInit() {
     this.loadYouTubeAPI();
@@ -329,8 +299,8 @@ triggerAnimation() {
     return window.innerHeight-90-50-(footer?.clientHeight || 0) - 4 - (header?.clientHeight || 0) - (trackDock?.clientHeight || 0)  - 20
   }
 
-  initPlayer(playerId:string = 'player') {
-    const videoId = this.youtubeUrl.split('v=')[1];
+  initPlayer(resume:boolean = false, playerId:string = 'player') {
+    const videoId = this.audioService.youtubeUrl.split('v=')[1];
     if (!videoId) {
       console.error('Invalid YouTube URL');
       return;
@@ -351,7 +321,14 @@ triggerAnimation() {
           'onStateChange': (event: any) => this.onPlayerStateChange(event)
         }
       });
-    } else {
+
+    } 
+    else if (resume)
+    {
+      this.player.seekTo(this.audioService.currentTimeDict[this.audioService.currentTrack?.id!])
+      this.player.playVideo();
+    }
+    else {
       this.player.destroy();
       this.player = undefined;
       this.initPlayer();
@@ -360,7 +337,9 @@ triggerAnimation() {
 
   onPlayerReady(event: any) {
     this.isPlayerReady = true;  // Mark player as ready
-
+    if(this.audioService.currentTimeDict[this.audioService.currentTrack?.id!] > 0){
+      this.player.seekTo(this.audioService.currentTimeDict[this.audioService.currentTrack?.id!])
+    }
     if (this.queuedVideoId) {
       console.log('Loading queued video:', this.queuedVideoId);
       this.player.loadVideoById(this.queuedVideoId);  // Load queued video
@@ -377,27 +356,27 @@ triggerAnimation() {
     }
   }
 
-  async onPlay(playerId:string = 'player') {
+  async onPlay(resume:boolean = false, playerId:string = 'player') {
     this.colours = await this.getMostProminentColours()
     this.cdr.detectChanges(); 
     this.styles.forEach(data => {
       document.documentElement.style.setProperty(`--${data.name}`, data.value);
     });
-    if (this.currentTrack?.album_id && this.currentTrack?.artist_ids) {
-      const trackName = this.currentTrack['track_name']
-      const artistName = this.currentTrack['artist_name']
-      const length = Math.round(this.currentTrack['track_length']/ 1000);
+    if (this.audioService.currentTrack?.album_id && this.audioService.currentTrack?.artist_ids ) {
+      const trackName = this.audioService.currentTrack['track_name']
+      const artistName = this.audioService.currentTrack['artist_name']
+      const length = Math.round(this.audioService.currentTrack['track_length']/ 1000);
       let tracksToCheck = []
-      this.playlistIndex = this.tracks.indexOf(this.currentTrack);
-      let nextIndex = this.playlistIndex+1>this.tracks.length-1?this.tracks.length-1:this.playlistIndex+1
-      let prevIndex = this.playlistIndex-1<0?0:this.playlistIndex-1
-      tracksToCheck.push(...[this.tracks[prevIndex], this.currentTrack, this.tracks[nextIndex]])
+      this.audioService.playlistIndex = this.audioService.tracks.indexOf(this.audioService.currentTrack);
+      let nextIndex = this.audioService.playlistIndex+1>this.audioService.tracks.length-1?this.audioService.tracks.length-1:this.audioService.playlistIndex+1
+      let prevIndex = this.audioService.playlistIndex-1<0?0:this.audioService.playlistIndex-1
+      tracksToCheck.push(...[this.audioService.tracks[prevIndex], this.audioService.currentTrack, this.audioService.tracks[nextIndex]])
       for (let track of tracksToCheck){
         let savedTrack = this.authService.savedTracks.find(x => x.id == track?.id)
         let index = this.authService.savedTracks.findIndex(x => x.id == track?.id)
         if (savedTrack?.youtube_url) {
-          if(track?.id == this.currentTrack?.id){
-            this.youtubeUrl = savedTrack.youtube_url
+          if(track?.id == this.audioService.currentTrack?.id){
+            this.audioService.youtubeUrl = savedTrack.youtube_url
           }
         }
         else{
@@ -406,22 +385,22 @@ triggerAnimation() {
               params: { t: trackName, a: artistName, l:length},
             })
           );
-          this.youtubeUrl = response.message;
+          this.audioService.youtubeUrl = response.message;
           if(savedTrack){
-            savedTrack.youtube_url = this.youtubeUrl
+            savedTrack.youtube_url = this.audioService.youtubeUrl
             this.authService.savedTracks.splice(index, 1, savedTrack)
           }
         }
       }
      
-      const videoId = this.youtubeUrl.split('v=')[1];
+      const videoId = this.audioService.youtubeUrl.split('v=')[1];
       if (!videoId) {
         console.error('Invalid YouTube URL: Unable to extract video ID');
         return;
       }
 
       // Initialize the player or load the new video
-      this.initPlayer(playerId);
+      this.initPlayer(resume,playerId);
       this.youtubeDialogVisible = true;
     }
     this.onDockScroll()

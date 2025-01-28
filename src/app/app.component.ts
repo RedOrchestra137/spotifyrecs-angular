@@ -9,6 +9,7 @@ import { ThemeService } from '../services/theme.service';
 import { InputSwitchChangeEvent } from 'primeng/inputswitch';
 import { LocalizationService } from '../services/localization.service';
 import { ProgressService } from '../services/progress.service';
+import { AudioService } from '../services/audio.service';
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -17,7 +18,7 @@ import { ProgressService } from '../services/progress.service';
     TranslateModule
   ], 
   providers: [
-    SpotifyAuthService, ThemeService, LocalizationService, ProgressService
+    SpotifyAuthService, ThemeService, LocalizationService, ProgressService, AudioService
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'

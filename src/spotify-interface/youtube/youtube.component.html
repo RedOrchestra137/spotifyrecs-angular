@@ -1,11 +1,11 @@
 <div class="flex flex-column justify-content-center w-full">
     <p-galleria 
-    [value]="tracks"
+    [value]="audioService.tracks"
     (activeIndexChange)="onPlay()"
     [circular]="true" 
     [numVisible]="5"
     [containerStyle]="{'margin-left': 'auto', 'margin-right': 'auto'}" 
-    [(activeIndex)]="playlistIndex"
+    [(activeIndex)]="audioService.playlistIndex"
     [showThumbnails]="false"
     [showThumbnailNavigators]="false"
     >
@@ -63,7 +63,7 @@
             </button>
         </div>
         <!-- Track items -->
-        <div *ngFor="let item of tracks" (click)="onNewTrack(item)" class="relative ml-3">
+        <div *ngFor="let item of audioService.tracks" (click)="onNewTrack(item)" class="relative ml-3">
             <!-- Centered Icon Overlay -->
             <i
                 *ngIf="selectedDict[item.id!]"

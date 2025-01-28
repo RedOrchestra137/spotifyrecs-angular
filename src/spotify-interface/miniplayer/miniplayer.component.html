@@ -1,0 +1,25 @@
+<div id="player"></div>
+
+<p-card id="miniplayer"  class="text-sm text-center">
+    <ng-template pTemplate="header">
+        <div class="text-lg pl-[100px]">
+            {{header}}
+        </div>
+    </ng-template>
+    <div class="flex flex-row gap-2 text-center align-items-center">
+        <img [src]="image" [width]="100">
+        <div class="flex justify-between flex-column w-full pl-3 pt-3 h-[100px]">
+            <p-slider [(ngModel)]="currentTime" styleClass="w-full" [max]="duration" (onChange)="onSliderChange($event)"/>
+            <div>
+                {{formatTime(currentTime)}}
+            </div>
+            <div class="flex flex-row justify-evenly align-center">
+                <i class="material-icons hover:cursor-pointer" style="font-size:40px;" (click)="prevTrack()">skip_previous</i> 
+                <i class="material-icons hover:cursor-pointer" style="font-size:50px;" (click)="onPause()" *ngIf="audioService.playing">pause</i>    
+                <i class="material-icons hover:cursor-pointer" style="font-size:50px;" (click)="onPlay()" *ngIf="!audioService.playing">play_arrow</i>    
+                <i class="material-icons hover:cursor-pointer" style="font-size:40px;" (click)="nextTrack()">skip_next</i> 
+            </div>
+        </div>
+    </div>
+
+</p-card>

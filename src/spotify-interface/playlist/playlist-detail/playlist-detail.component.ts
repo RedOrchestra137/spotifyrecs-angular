@@ -10,6 +10,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { SafePipe } from '../../../app/pipe';
 import { MessageService } from 'primeng/api';
 import { ThemeService } from '../../../services/theme.service';
+import { AudioService } from '../../../services/audio.service';
 export interface startPlaylistModeEvent{
   tracks: Array<Track>
 }
@@ -28,15 +29,12 @@ export class PlaylistDetailComponent implements OnInit {
   @ViewChild('trackList', { static: false }) trackList!: ElementRef;
   playlist!: PublicPlaylist;
   
-  ogTracks: Array<SavedTrack> = [];
-  shuffledTracks: Array<SavedTrack> = [];
   _loading: boolean = false;
   filterTracks: Array<SavedTrack> = [];
   sortOrder: number = -1;
   sortField: any = 'popularity';
   sortKey: any = 'popularity';
   ascendingSort: boolean = false;
-  shuffled: boolean = false;
   playingTrackId: string = '';
   preLoadingYoutube: boolean = false;
   sortOptions: any[] = [
@@ -49,8 +47,8 @@ export class PlaylistDetailComponent implements OnInit {
   private isShiftPressed = false;
   youtubeEquivalent:string = "";
 
-  constructor(private route: ActivatedRoute, private _customClient:HttpClient,private sanitizer: DomSanitizer
-    ,private _spotifyAuth:SpotifyAuthService,
+  constructor(private route: ActivatedRoute, private _customClient:HttpClient,private sanitizer: DomSanitizer,public audioService:AudioService,
+    private _spotifyAuth:SpotifyAuthService,
     private messageService: MessageService,
     public themeService: ThemeService) {
     document.addEventListener('keydown', (event) => {
@@ -71,11 +69,11 @@ export class PlaylistDetailComponent implements OnInit {
   public get tracks(): Array<SavedTrack>{
     let sort:string[] = (this.sortField as string).split('.')
 
-    if(this.shuffled){
-      return this.shuffledTracks
+    if(this.audioService.shuffled){
+      return this.audioService.shuffledTracks
       .filter(track => track?.['track_name'].toLowerCase().includes(this.filterValue.toLowerCase()))
     }
-    return this.ogTracks
+    return this.audioService.ogTracks
     .filter(track => track?.['track_name'].toLowerCase().includes(this.filterValue.toLowerCase()))
     .sort(
       (a,b)=>{
@@ -104,7 +102,7 @@ export class PlaylistDetailComponent implements OnInit {
     )
   }
   public set tracks(value: Array<SavedTrack>){
-    this.ogTracks = value
+    this.audioService.ogTracks = value
   }
   public get onMobile(): boolean{
     
@@ -225,9 +223,9 @@ export class PlaylistDetailComponent implements OnInit {
 
   ngOnInit() {
     this._loading = true;
-    this.shuffled = false;
-    this.shuffledTracks = [];
-    this.ogTracks = [];
+    this.audioService.shuffled = false;
+    this.audioService.shuffledTracks = [];
+    this.audioService.ogTracks = [];
     if (this.playlistId !== '') {
       this._customClient
         .get<PlaylistDetail|PublicPlaylist>(Routes.Spotify.GetPlaylist(this.playlistId))
@@ -251,12 +249,12 @@ export class PlaylistDetailComponent implements OnInit {
   }
   onSortChange(event: any){
     let value = event.value;
-    this.shuffled = false
+    this.audioService.shuffled = false
     this.sortField = value;
     this.ascendingSort = this.sortOrder == 1
   }
   toggleAscending(){
-    this.shuffled = false
+    this.audioService.shuffled = false
     this.ascendingSort = !this.ascendingSort
     if(this.ascendingSort){
       this.sortOrder = 1
@@ -286,8 +284,8 @@ export class PlaylistDetailComponent implements OnInit {
     
   }
   shuffle(){
-    this.shuffledTracks = Array.from(this.ogTracks.sort(() => Math.random() - 0.5));
-    this.shuffled = !this.shuffled
+    this.audioService.shuffledTracks = Array.from(this.audioService.ogTracks.sort(() => Math.random() - 0.5));
+    this.audioService.shuffled = !this.audioService.shuffled
   }
   onPlay(track: SavedTrack) {
     this.playingTrackId = "";

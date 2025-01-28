@@ -25,6 +25,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { OwnershipCheckComponent } from './ownership-check/ownership-check.component';
 import { Navigation, Router } from '@angular/router';
 import { ProgressData, ProgressService } from '../services/progress.service';
+import { AudioService } from '../services/audio.service';
+import { MiniplayerComponent } from './miniplayer/miniplayer.component';
 
 export enum PlayListDialogState {
   SelectMultipleLiked,
@@ -36,7 +38,7 @@ export enum PlayListDialogState {
   standalone: true,
   imports: [ImportsModule,PlaylistComponent,PlaylistDetailComponent, HttpClientModule,
     YoutubeComponent,AddOtherPlaylistComponent, CreatePlaylistComponent,
-    OwnershipCheckComponent
+    OwnershipCheckComponent, MiniplayerComponent
   ],
   templateUrl: './spotify-interface.component.html',
   styleUrl: './spotify-interface.component.css',
@@ -61,6 +63,7 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
   @ViewChild(OwnershipCheckComponent) ownershipCheck!: OwnershipCheckComponent;
   @ViewChild('scrollingText', { static: false }) scrollingText!: ElementRef;
   @ViewChild('scrollTextContainer', { static: false }) scrollTextContainer!: ElementRef;
+  @ViewChild(MiniplayerComponent) miniplayer!: MiniplayerComponent
   playlistCreatedEmitter: EventEmitter<Playlist> = new EventEmitter<Playlist>()
   referenceButton: HTMLElement | null = null;
   showPlaylistDialog:boolean = false
@@ -69,6 +72,7 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
   showOtherPlaylistDialog:boolean = false
   showCreatePlaylistDialog:boolean = false
   showYoutubeDialog:boolean = false
+  showMinimizedPlayer:boolean = false
 
   checking:boolean = false
   code:string = ""
@@ -140,7 +144,8 @@ export class SpotifyInterfaceComponent implements OnInit,OnDestroy,AfterViewInit
     private cdr: ChangeDetectorRef,
     public themeService: ThemeService,
     private Router:Router,
-    private progressService:ProgressService
+    private progressService:ProgressService,
+    public audioService:AudioService
   ) {
     this.sessionId = uuidv4()
     this.savedTracksSubscription = this.authService.savedTracksFinished.subscribe((value) => {
@@ -219,6 +224,19 @@ public get buttonWidth(): number {
   //       styleClass: 'generateDropdownOption',
   //     }
   // ];
+  }
+
+  listenInBackground(){
+    this.showYoutubeDialog = false
+    this.showMinimizedPlayer = true
+    this.miniplayer.onPlay(true)
+  }
+
+  openFullPlayer(){
+    this.showMinimizedPlayer = false
+    this.ytDialog.maximize()
+    this.showYoutubeDialog = true
+    this.ytComponent.onPlay(true)
   }
   startScrolling() {
     const textElement = this.scrollingText.nativeElement;
@@ -357,10 +375,11 @@ public get buttonWidth(): number {
     }
   }
   onYoutubeClose() {
+    this.audioService.currentTimeDict[this.audioService.currentTrack?.id!] = this.ytComponent.player?.getCurrentTime()
     this.authService.youtube = false
-    this.ytComponent.selectedDict[this.ytComponent.currentTrack?.id!] = false
+    this.ytComponent.selectedDict[this.audioService.currentTrack?.id!] = false
     this.ytComponent.scrollInitialized = false
-    this.ytComponent.shuffled = false
+    this.audioService.shuffled = false
   }
   showAddedToLiked() {
     this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Added all to "Liked"',  });
@@ -766,13 +785,13 @@ public get buttonWidth(): number {
     this.startScrolling();
   }
  async playingTrack(track:SavedTrack){
-    if(this.plDetailsComponent.shuffled){
-      this.ytComponent.tracks = this.plDetailsComponent.tracks
+    if(this.audioService.shuffled){
+      this.audioService.tracks = this.plDetailsComponent.tracks
     }
     else{
       let sort:string[] = (this.plDetailsComponent.sortField as string).split('.')
       let sortOrder = this.plDetailsComponent.sortOrder
-      this.ytComponent.tracks = Array.from(this.plDetailsComponent.tracks).sort(
+      this.audioService.tracks = Array.from(this.plDetailsComponent.tracks).sort(
         (a,b)=>{
           let aVal:any = a
           let bVal:any = b

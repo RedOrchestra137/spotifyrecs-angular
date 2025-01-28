@@ -19,7 +19,15 @@
         transform: translateX(-100%);
     }
 }
-
+#miniplayer .p-card{
+    padding-right:30px;
+}
+#miniplayer .p-dialog-content{
+    padding:0;
+}
+#miniplayer .p-dialog-header{
+    padding:10px;
+}
 .p-image-mask{
     z-index: 1;
 }

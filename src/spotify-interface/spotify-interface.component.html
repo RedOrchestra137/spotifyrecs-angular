@@ -312,7 +312,6 @@
 
 </div>
 
-
 <p-dialog 
     header="{{playlistDialogState==0 ? 'Select playlists to add to liked': playlistDialogState==1 ? 'Select playlists to base recommendations on' :  'Your Public Playlists'}}"
     [modal]="true"
@@ -367,7 +366,6 @@
     <app-add-other-playlist #addOtherPlComponent (addedOtherPlaylists)="addedOtherPlaylists($event)"></app-add-other-playlist>
 </p-dialog> 
 <p-dialog 
-    header="Playlist: {{capitalizeFirstLetter(detailsName)}}" 
     [(visible)]="showPlaylistDetailDialog" 
     [modal]="true" 
     [style]="{ width: '80vw' }" 
@@ -378,6 +376,16 @@
     class="playlistDetailOverlay"
     [baseZIndex]="10009"
     >
+    <ng-template pTemplate="header">
+        <div class="flex flex-row align-items-center justify-content-between w-full mx-2">
+            <div class="text-lg font-bold ml-3">
+                Playlist: {{capitalizeFirstLetter(detailsName)}}
+            </div>
+            <div class="icon-container mr-3 ml-auto">
+                <button class="p-button p-button-text p-button-rounded p-button-plain" pTooltip="Listen in Background" pButton pRipple icon="pi pi-headphones" (click)="listenInBackground()"></button>
+            </div>
+        </div>
+    </ng-template>
     <app-playlist-detail #plDetailsComponent (playingTrack)="playingTrack($event)" class="w-full"></app-playlist-detail>
 </p-dialog>
 <p-dialog
@@ -403,15 +411,15 @@
         <div class="flex flex-row align-items-center justify-content-between w-full mx-2">
             <!-- Shuffle Button -->
             <div class="icon-container mr-3 ml-auto">
-                <button pButton pRipple class="p-button-rounded p-button-text p-button-plain {{ytComponent.shuffled ? 'text-purple-'+themeService.getShade(400) : 'text-gray-'+themeService.getShade(400)}}" 
-                pTooltip ="{{ytComponent.shuffled ? 'Unshuffle' : 'Shuffle'}}" (click)="ytComponent.onShuffle()">
+                <button pButton pRipple class="p-button-rounded p-button-text p-button-plain {{audioService.shuffled ? 'text-purple-'+themeService.getShade(400) : 'text-gray-'+themeService.getShade(400)}}" 
+                pTooltip ="{{audioService.shuffled ? 'Unshuffle' : 'Shuffle'}}" (click)="ytComponent.onShuffle()">
                     <i class="material-icons">shuffle</i>
                 </button>
             </div>
         
             
             <!-- Check Button -->
-            <i class="icon-container mx-2 text-lg pi pi-check-square cursor-pointer {{ytComponent.currentTrack!.favourite ? 'text-green-'+themeService.getShade(400) : 'text-gray-'+themeService.getShade(400)}}" pTooltip="{{ytComponent.currentTrack!.favourite ? 'Remove from Favourites' : 'Add to Favourites'}}" (click)="EditSaved([ytComponent.currentTrack])"></i>
+            <i class="icon-container mx-2 text-lg pi pi-check-square cursor-pointer {{audioService.currentTrack!.favourite ? 'text-green-'+themeService.getShade(400) : 'text-gray-'+themeService.getShade(400)}}" pTooltip="{{audioService.currentTrack?.favourite ? 'Remove from Favourites' : 'Add to Favourites'}}" (click)="EditSaved([audioService.currentTrack!])"></i>
         
             <!-- Now Playing Text with Scrolling Effect -->
             <div class="scrolling-container mx-2">
@@ -422,8 +430,8 @@
                     </span>
                 </div>
                 <!-- Popularity Text -->
-                <p class="font-bold popularity-label w-full text-sm text-center {{themeService.getPopularityColor(ytComponent.currentTrack)}} mx-2">
-                    {{themeService.getPopularityText(ytComponent.currentTrack)}}
+                <p class="font-bold popularity-label w-full text-sm text-center {{themeService.getPopularityColor(audioService.currentTrack!)}} mx-2">
+                    {{themeService.getPopularityText(audioService.currentTrack!)}}
                 </p>
             </div>
         
@@ -438,17 +446,49 @@
                 </a>
             </div>
             <div pTooltip="Open in Youtube" class="icon-container ml-3 mr-auto">
-                <a [href]="ytComponent.youtubeUrl" target="_blank">
+                <a [href]="audioService.youtubeUrl" target="_blank">
                     <button pButton pRipple class="p-button-rounded p-button-text">
                         <img src="https://www.svgrepo.com/show/513089/youtube-168.svg" width="30" class="spotLikeLogo">
                     </button>
                 </a>
             </div>
 
+            <div class="icon-container ml-3" pTooltip="Play in Background">
+                <button class="p-button p-button-text p-button-rounded p-button-plain" pButton pRipple icon="pi pi-headphones" (click)="listenInBackground()"></button>
+            </div>
         </div>
     </div>
   </ng-template>
   <app-youtube (trackChange)="ytTrackChange()" class="flex flex-1 w-full" #ytComponent></app-youtube>
+</p-dialog>
+
+<p-dialog #miniplayerDialog 
+    id="miniplayer"
+    [(visible)]="showMinimizedPlayer"
+    [modal]="false" 
+    [draggable]="true"
+    [keepInViewport]="true"
+    [resizable]="false"
+    [closable]="true"
+    [dismissableMask]="false"
+    [maximizable]="false"
+    class="overflow-hidden"
+    [style]="{ width: '30vw'}" 
+    [breakpoints]="{'1200px': '50vw', '750px':'75vw', '575px': '90vw'}"
+    [baseZIndex]="10020"
+    >
+    <ng-template pTemplate="header">
+        <div class="flex flex-row w-full mr-2 pt-2">
+            <div pTooltip="Shuffle" class="w-fit h-fit ml-2 my-auto ">
+                <i class="material-icons hover:cursor-pointer {{audioService.shuffled ? 'text-purple-400' : 'text-gray-400'}}" (click)="audioService.shuffle();miniplayer.onPlay(true)">shuffle</i>
+            </div>
+            <div pTooltip="Large Player" class="w-fit h-fit ml-auto my-auto ">
+                <i class="material-icons hover:cursor-pointer" (click)="openFullPlayer()">open_in_new</i>
+            </div>
+        </div>
+
+    </ng-template>
+    <app-miniplayer #ytMiniplayerComponent></app-miniplayer>
 </p-dialog>
 
 
