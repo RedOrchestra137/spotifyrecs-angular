@@ -348,7 +348,7 @@ public get buttonWidth(): number {
       // { label: 'Products', icon: 'pi pi-list', route:'' },
     ];
     this.activeItem = this.items[0];
-    
+    await firstValueFrom(this.http.get(Routes.Spotify.Patch))
     if(!this.authService.authenticatedUser&&this.authService.lsUser){
       await this.http.get<SpotifyUser>(Routes.Spotify.GetUser).subscribe((response)=>{
         this.authService.SetUser(response)
