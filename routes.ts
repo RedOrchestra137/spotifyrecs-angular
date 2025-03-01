@@ -31,7 +31,7 @@ export class Routes{
         GetRecordingFromSpotify:this.WebBaseSpotify+"api/musicbrainz/recording/fromSpotify",
         Progress: this.WebBaseSpotify+"progress",
         DeletePlaylist(id:string){return Routes.WebBaseSpotify+"playlists/deletePlaylist/"+id},
-        GetVersion: this.WebBaseSpotify + "getLatestVersion"
+        Patch: this.WebBaseSpotify + "needsPatch"
         
     }
     static PostGres = {
