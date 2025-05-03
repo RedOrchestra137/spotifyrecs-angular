@@ -14,7 +14,9 @@ export class AudioService {
   shuffledTracks: SavedTrack[] = []
 
   youtubeUrl:string = ""
-  
+  public get spotifyUrl():string{
+    return this.currentTrack?.spotify_url??""
+  }
 
   public get currentTrack():SavedTrack|null{
     return this.tracks[this.playlistIndex]??null

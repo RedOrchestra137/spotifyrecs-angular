@@ -381,9 +381,6 @@
             <div class="text-lg font-bold ml-3">
                 Playlist: {{capitalizeFirstLetter(detailsName)}}
             </div>
-            <div class="icon-container mr-3 ml-auto">
-                <button class="p-button p-button-text p-button-rounded p-button-plain" pTooltip="Listen in Background" pButton pRipple icon="pi pi-headphones" (click)="listenInBackground()"></button>
-            </div>
         </div>
     </ng-template>
     <app-playlist-detail #plDetailsComponent (playingTrack)="playingTrack($event)" class="w-full"></app-playlist-detail>
@@ -439,7 +436,7 @@
         
             <!-- Spotify Button -->
             <div pTooltip="Open in Spotify" class="icon-container ml-3">
-                <a href="{{plDetailsComponent.playlist.url}}" target="_blank">
+                <a href="{{audioService.spotifyUrl}}" target="_blank">
                     <button pButton pRipple class="p-button-rounded p-button-text">
                         <img src="https://www.svgrepo.com/show/512899/spotify-162.svg" width="30" class="spotLikeLogo">
                     </button>

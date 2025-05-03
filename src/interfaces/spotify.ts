@@ -376,7 +376,8 @@ export class Track implements ITrack {
       album_release_date: track.track?.album?.release_date??'',
       album_url: track.track?.album.href??'',
       album_image: track.track?.album.images[0].url??'',
-      preview_url: track.track?.preview_url??''
+      preview_url: track.track?.preview_url??'',
+      spotify_url: track.GetUrl()
     }
     return savedTrack
   }
@@ -600,6 +601,7 @@ export interface SavedTrack{
   "playlist_ids": Array<string>
   "favourite": boolean,
   "youtube_url": string,
+  "spotify_url":string,
   "popularity":number,
   "available_markets":number,
   "album_name":string,
