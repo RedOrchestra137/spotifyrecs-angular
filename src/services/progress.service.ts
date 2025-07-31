@@ -4,7 +4,6 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { SpotifyAuthService } from './spotify-auth.service';
 import { Routes } from '../../routes';
 import { SavedTrack } from '../interfaces/spotify';
-import { io, Socket } from 'socket.io-client';
 
 export interface ProgressData {
   message: string;
@@ -20,81 +19,52 @@ export interface ProgressData {
 })
 export class ProgressService {
   newDataEvent: EventEmitter<ProgressData> = new EventEmitter<ProgressData>();
-  private socket: Socket | null = null;
-  private isConnected = false;
+  private eventSource: EventSource | null = null;
 
   constructor() {}
 
   startProcess(userId: string, token: string) {
-    // Initialize Socket.IO connection - remove the cors option
-    this.socket = io('https://redorchid.eu', {
-      transports: ['websocket', 'polling'], // Fallback to polling if websocket fails
-      autoConnect: true,
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000
-    });
+    // Close any existing connection first
+    if (this.eventSource) {
+      this.eventSource.close();
+    }
 
-    // Handle connection
-    this.socket.on('connect', () => {
-      console.log('Connected to progress WebSocket');
-      this.isConnected = true;
-      
-      // Subscribe to progress updates for this user
-      this.socket!.emit('subscribe-progress', {
-        userId: userId,
-        userToken: token
-      });
-    });
-
+    // Open the SSE connection
+    this.eventSource = new EventSource(`https://redorchid.eu/api/progress?spotify-user-id=${userId}&user-token=${token}`);
+    
     // Listen for progress updates
-    this.socket.on('progress-update', (data: ProgressData) => {
-      console.log("Progress update:", data);
-      this.newDataEvent.emit(data);
-    });
+    this.eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        this.newDataEvent.emit(data);
+        console.log("Progress update:", data);
+      } catch (error) {
+        console.error('Error parsing SSE data:', error);
+      }
+    };
 
-    // Handle connection errors
-    this.socket.on('connect_error', (error) => {
-      console.error("Error in WebSocket connection", error);
-      this.newDataEvent.emit({
-        message: 'Connection error',
-        progress: 0,
-        response: null
-      });
-    });
+    this.eventSource.onerror = (error) => {
+      console.error("Error in SSE stream", error);
+      this.eventSource?.close();
+      this.eventSource = null;
+    };
 
-    // Handle disconnection
-    this.socket.on('disconnect', (reason) => {
-      console.log('Disconnected from progress WebSocket:', reason);
-      this.isConnected = false;
-    });
-
-    // Handle reconnection
-    this.socket.on('reconnect', (attemptNumber) => {
-      console.log('Reconnected to progress WebSocket after', attemptNumber, 'attempts');
-      this.isConnected = true;
-    });
+    this.eventSource.onopen = () => {
+      console.log("SSE connection opened");
+    };
   }
 
-  // Close the WebSocket connection when done
+  // Close the SSE connection when done
   stop() {
-    if (this.socket) {
-      console.log("Closing WebSocket connection");
-      this.socket.disconnect();
-      this.socket = null;
-      this.isConnected = false;
+    if (this.eventSource) {
+      console.log("Closing SSE connection");
+      this.eventSource.close();
+      this.eventSource = null;
     }
   }
 
-  // Optional: Method to check connection status
+  // Check if connection is open
   isConnectionOpen(): boolean {
-    return this.isConnected;
-  }
-
-  // Optional: Method to send custom messages to server
-  sendMessage(event: string, data: any) {
-    if (this.socket && this.isConnected) {
-      this.socket.emit(event, data);
-    }
+    return this.eventSource !== null && this.eventSource.readyState === EventSource.OPEN;
   }
 }
