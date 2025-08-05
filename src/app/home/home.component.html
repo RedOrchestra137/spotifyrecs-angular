@@ -3,11 +3,43 @@
         background-color: var(--spotify-green);
     }
 </style>
+<style>
+    ::ng-deep #aphexStyle > .p-card{
+        background-color: var(--aphex-bordeau);
+    }
+</style>
+<style>
+    ::ng-deep #tdStyle > .p-card{
+        background-color: var(--td-blue);
+    }
+</style>
 <div class="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-4 pl-5 pt-5 max-w-full max-h-full">
     <div *ngFor="let page of pages">
-        <a [routerLink]=page.route routerLinkActive="true">
-            <div class="shadow-lg">
-                <p-card [id]="page.id">
+        <a *ngIf="page.route" [routerLink]=page.route routerLinkActive="true">
+            <div class="shadow-lg h-full">
+                <p-card [id]="page.id" class="h-full inline-block w-full">
+                    <ng-template pTemplate="header">
+                        <div class="flex flex-row w-full justify-content-center pt-5 text-xl font-bold">
+                            <div>
+                                <img [id]="page.imageId" [src]="page.image" [style]="{width: '30px'}" class="spotLikeLogo">
+                            </div>
+                            <div class="ml-2">
+                                {{page.title}}
+                            </div>
+                        </div>
+                    </ng-template>
+                    <ng-template pTemplate="content">
+                        <p class="m-0 text-center">
+                            {{page.description}}
+                        </p>
+                    </ng-template>
+                </p-card>
+            </div>
+        </a>
+        <a *ngIf="page.url" [href]="page.url" target="_blank">
+            <div class="shadow-lg h-full">
+                
+                <p-card [id]="page.id" class="h-full inline-block w-full">
                     <ng-template pTemplate="header">
                         <div class="flex flex-row w-full justify-content-center pt-5 text-xl font-bold">
                             <div>

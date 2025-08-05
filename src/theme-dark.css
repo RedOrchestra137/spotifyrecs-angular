@@ -4,6 +4,8 @@
     --sidebar-background: rgba(0, 0, 0, 0.8); /* Darker background */
     --sidebar-backdrop: blur(15px);
     --spotify-green:#399841;
+    --aphex-bordeau:#4f0b1b;
+    --td-blue:#182a54;
     --button-text-color: rgb(218, 230, 218);
     --spotify-like-logo: invert(100%);
     --spotify-playlist-logo:invert(100%) hue-rotate(180deg) brightness(200%);

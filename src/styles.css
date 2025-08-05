@@ -236,3 +236,7 @@ transform: translate(-50%, -50%);
 font-size: 1rem; /* Adjust size as needed */
 color: var(--text-color); /* Choose an appropriate color */
 }
+.p-card {
+    height:100%;
+    width:100%;
+}
