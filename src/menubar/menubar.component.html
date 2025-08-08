@@ -76,6 +76,10 @@
 </p-menubar>
 
 <p-menubar *ngIf="_spotifyAuth.onMobile">
+    <ng-template pTemplate="start">
+        <img (click)="toHome()" style="cursor: pointer;" src="https://firebasestorage.googleapis.com/v0/b/lebai-c181c.appspot.com/o/redorchid_whiteborder.png?alt=media&token=9d6a7d2c-92c9-4b85-818c-8010e7e749c9" alt="logo" height="50" width="50" class="mr-3 ml-2"/>
+        <!-- <img *ngIf="!darkMode" (click)="toHome()" style="cursor: pointer;" src="https://firebasestorage.googleapis.com/v0/b/lebai-c181c.appspot.com/o/blueorchid_whiteborder.png?alt=media&token=e9799d7b-ed7a-48dd-a1e1-1731b94e2e60" alt="logo" height="50" width="50" class="mr-3 ml-2"/> -->
+    </ng-template>
     <ng-template pTemplate="end" class="ml-0">
         <div class="flex flex-1 align-items-center justify-content-end gap-2 mr-0 md:mr-10 lg:mr-20">
             <p *ngIf="isAuthenticated" class="flex flex-row mx-auto align-items-center">

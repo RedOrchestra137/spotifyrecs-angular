@@ -19,9 +19,6 @@ export class AuthGuard implements CanActivate {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): boolean | UrlTree {
-    if (!this.authService.onMobile) {
-      return true; // Allow navigation
-    }
-    return this.router.createUrlTree(['/spotify']); // Redirect to login
+    return true; // Allow navigation
   }
 }
